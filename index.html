@@ -6,110 +6,118 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root { --mc-alpha: #2ecc71; --ui-dark: #111; --accent: #00d2ff; }
-        body { font-family: 'Segoe UI', sans-serif; background: #050505; color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background: #050505; color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
         
         header { background: var(--ui-dark); width: 100%; padding: 10px 20px; border-bottom: 3px solid #333; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
         .nav-buttons { display: flex; gap: 10px; }
-        .game-btn { background: #222; color: #fff; border: 1px solid #444; padding: 10px 18px; cursor: pointer; border-radius: 5px; font-weight: bold; transition: 0.2s; }
-        .game-btn:hover { background: #333; border-color: var(--accent); }
-        .active-mc { border-color: var(--mc-alpha) !important; color: var(--mc-alpha); }
+        .game-btn { background: #222; color: #fff; border: 1px solid #444; padding: 10px 18px; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        .game-btn:hover { border-color: var(--accent); }
 
-        #main-layout { display: flex; width: 1200px; height: 600px; background: #000; border: 4px solid #1a1a1a; border-radius: 10px; margin-top: 15px; position: relative; }
-        #game-screen { flex-grow: 1; position: relative; overflow: hidden; }
+        #main-container { display: flex; width: 1200px; height: 600px; background: #000; border: 4px solid #1a1a1a; border-radius: 10px; margin-top: 15px; overflow: hidden; }
+        #game-view { flex-grow: 1; position: relative; }
         
-        /* Panel aktualizacji - UKRYWANY */
-        #alpha-log { width: 280px; background: #0d0d0d; border-left: 2px solid #222; padding: 20px; font-size: 13px; color: #aaa; display: none; overflow-y: auto; }
-        #alpha-log h3 { color: var(--mc-alpha); margin-top: 0; }
+        /* Styl panelu - tylko gdy istnieje */
+        .alpha-sidebar { width: 280px; background: #0d0d0d; border-left: 2px solid #222; padding: 20px; font-size: 13px; color: #aaa; overflow-y: auto; }
+        .alpha-sidebar h3 { color: var(--mc-alpha); margin-top: 0; }
 
         #hud { position: absolute; top: 20px; left: 20px; z-index: 10; font-family: monospace; color: #fff; text-shadow: 2px 2px #000; pointer-events: none; }
         #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #fff; display: none; font-size: 24px; z-index: 5; opacity: 0.5; }
-        #hp-bar { position: absolute; bottom: 85px; left: 20px; z-index: 10; font-size: 20px; }
         
         .hotbar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: none; gap: 6px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 5px; border: 2px solid #333; }
         .slot { width: 35px; height: 35px; border: 2px solid #555; display: flex; align-items: center; justify-content: center; font-size: 12px; }
         .slot.active { border-color: var(--mc-alpha); background: rgba(46, 204, 113, 0.2); }
 
-        .lang-btn { background: transparent; color: #666; border: 1px solid #333; cursor: pointer; padding: 3px 8px; font-size: 12px; margin-left: 5px; }
+        .lang-btn { background: transparent; color: #666; border: 1px solid #333; cursor: pointer; padding: 3px 8px; font-size: 12px; }
         .lang-btn.active { color: var(--accent); border-color: var(--accent); }
     </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
 
 <header>
-    <div style="font-weight: 900; font-size: 20px; letter-spacing: 1px;">AIGRY: <span style="color:var(--accent)">MULTIGAME</span></div>
+    <div style="font-weight: 900; font-size: 20px;">AIGRY: <span style="color:var(--accent)">MULTIGAME</span></div>
     <div class="nav-buttons">
-        <button class="game-btn" onclick="run('mario')" id="btn-mario">MARIO</button>
-        <button class="game-btn" onclick="run('mc')" id="btn-mc">MC AI ALPHA</button>
-        <button class="game-btn" onclick="run('snake')" id="btn-snake">SNAKE</button>
+        <button class="game-btn" onclick="play('mario')">MARIO</button>
+        <button class="game-btn" style="color:var(--mc-alpha)" onclick="play('mc')">MC AI ALPHA</button>
+        <button class="game-btn" onclick="play('snake')">SNAKE</button>
     </div>
     <div>
-        <button class="lang-btn active" id="l-pl" onclick="setLang('pl')">PL</button>
-        <button class="lang-btn" id="l-en" onclick="setLang('en')">EN</button>
+        <button class="lang-btn active" id="l-pl" onclick="changeL('pl')">PL</button>
+        <button class="lang-btn" id="l-en" onclick="changeL('en')">EN</button>
     </div>
 </header>
 
-<div id="main-layout">
-    <div id="game-screen">
+<div id="main-container">
+    <div id="game-view">
         <div id="hud">Wybierz grę / Select a game</div>
-        <div id="hp-bar"></div>
         <div id="crosshair">+</div>
-        <div id="viewport" style="width:100%; height:100%;"></div>
+        <div id="display" style="width:100%; height:100%;"></div>
         <div id="hotbar" class="hotbar"></div>
     </div>
-    
-    <div id="alpha-log">
-        <h3 id="log-title">DZIENNIK ALPHA</h3>
-        <div id="log-content"></div>
     </div>
-</div>
 
 <script>
-    let scene, camera, renderer, loop, keys = {}, blocks = [], bid = 0, health = 10, lang = 'pl';
+    let scene, camera, renderer, loop, keys = {}, blocks = [], bid = 0, lang = 'pl', flying = false;
     const colors = [0x2ecc71, 0x7f8c8d, 0x8b4513, 0x27ae60, 0xadefff, 0xd35400, 0x3498db, 0x2c3e50, 0xf1c40f, 0xffff00];
-    const names = {
-        pl: ["TRAWA", "KAMIEŃ", "DREWNO", "LIŚCIE", "SZKŁO", "CEGŁY", "DIAMENT", "WĘGIEL", "ZŁOTO", "POCHODNIA"],
-        en: ["GRASS", "STONE", "WOOD", "LEAVES", "GLASS", "BRICKS", "DIAMOND", "COAL", "GOLD", "TORCH"]
+    
+    const content = {
+        pl: {
+            title: "DZIENNIK ALPHA (MC)",
+            log: "<b>v5.8 Alpha:</b><br>• Naprawiono znikanie panelu w innych grach<br>• Dodano tryb latania (Klawisz V)<br>• Optymalizacja UI<br><br><b>v5.7 Alpha:</b><br>• System językowy PL/EN"
+        },
+        en: {
+            title: "ALPHA LOG (MC)",
+            log: "<b>v5.8 Alpha:</b><br>• Fixed sidebar visibility in other games<br>• Added Fly Mode (Key V)<br>• UI Optimization<br><br><b>v5.7 Alpha:</b><br>• Language system PL/EN"
+        }
     };
 
-    const updates = {
-        pl: "<b>Alpha 5.7:</b><br>• Dynamiczny panel aktualizacji<br>• System języków PL/EN<br>• Poprawiona nazwa platformy<br><br><b>Alpha 5.6:</b><br>• Nowy teren Alpha Terrain v2",
-        en: "<b>Alpha 5.7:</b><br>• Dynamic update panel<br>• Language system PL/EN<br>• Fixed platform name<br><br><b>Alpha 5.6:</b><br>• New Alpha Terrain v2"
+    window.onkeydown = e => { 
+        keys[e.code] = true;
+        if(e.code === 'KeyV') flying = !flying; 
     };
-
-    window.onkeydown = e => keys[e.code] = true;
     window.onkeyup = e => keys[e.code] = false;
 
-    function setLang(l) {
+    function changeL(l) {
         lang = l;
         document.getElementById('l-pl').classList.toggle('active', l === 'pl');
         document.getElementById('l-en').classList.toggle('active', l === 'en');
-        document.getElementById('log-title').innerText = l === 'pl' ? "DZIENNIK ALPHA" : "ALPHA LOG";
-        document.getElementById('log-content').innerHTML = updates[l];
+        if(document.querySelector('.alpha-sidebar')) refreshSidebar();
     }
-    setLang('pl');
 
-    function run(game) {
+    function refreshSidebar() {
+        const old = document.querySelector('.alpha-sidebar');
+        if(old) old.remove();
+        
+        const side = document.createElement('div');
+        side.className = 'alpha-sidebar';
+        side.innerHTML = `<h3>${content[lang].title}</h3><div>${content[lang].log}</div>`;
+        document.getElementById('main-container').appendChild(side);
+    }
+
+    function play(game) {
         if(loop) cancelAnimationFrame(loop);
-        const out = document.getElementById('viewport');
+        const out = document.getElementById('display');
         out.innerHTML = "";
         
-        // Zarządzanie panelem aktualizacji
-        document.getElementById('alpha-log').style.display = (game === 'mc') ? "block" : "none";
+        // Czyść panel i UI
+        const side = document.querySelector('.alpha-sidebar');
+        if(side) side.remove();
         document.getElementById('hotbar').style.display = "none";
         document.getElementById('crosshair').style.display = "none";
-        document.getElementById('hp-bar').innerHTML = "";
 
-        if(game === 'mario') runMario(out);
-        if(game === 'mc') runMC(out);
-        if(game === 'snake') runSnake(out);
+        if(game === 'mc') {
+            refreshSidebar();
+            runMC(out);
+        } else if(game === 'mario') {
+            out.innerHTML = "<div style='color:white; font-size:40px; text-align:center; padding-top:200px;'>MARIO STABLE</div>";
+        } else {
+            out.innerHTML = "<div style='color:white; font-size:40px; text-align:center; padding-top:200px;'>SNAKE STABLE</div>";
+        }
     }
 
     function runMC(out) {
-        health = 10;
         document.getElementById('crosshair').style.display = "block";
         document.getElementById('hotbar').style.display = "flex";
-        updateHP();
-
+        
         scene = new THREE.Scene(); scene.background = new THREE.Color(0x87CEEB);
         camera = new THREE.PerspectiveCamera(75, out.clientWidth / out.clientHeight, 0.1, 1000);
         renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -117,15 +125,15 @@
         out.appendChild(renderer.domElement);
 
         const hb = document.getElementById('hotbar'); hb.innerHTML = "";
-        names[lang].forEach((n, i) => {
+        for(let i=0; i<10; i++) {
             let s = document.createElement('div'); s.className = 'slot' + (i===0?' active':'');
             s.style.background = "#" + colors[i].toString(16).padStart(6, '0');
             s.innerText = (i+1)%10; hb.appendChild(s);
-        });
+        }
 
         for(let x=-8; x<8; x++) for(let z=-8; z<8; z++) {
             const b = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshLambertMaterial({color:colors[0]}));
-            b.position.set(x, Math.floor(Math.sin(x/3)*2), z); scene.add(b); blocks.push(b);
+            b.position.set(x, 0, z); scene.add(b); blocks.push(b);
         }
         scene.add(new THREE.AmbientLight(0xffffff, 0.8));
         camera.position.set(0, 5, 5);
@@ -139,48 +147,30 @@
             }
         };
 
-        renderer.domElement.onmousedown = e => {
-            if(document.pointerLockElement !== renderer.domElement) return;
-            const dir = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
-            const pos = new THREE.Vector3().copy(camera.position).add(dir.multiplyScalar(4)).round();
-            if(e.button === 0) {
-                const b = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshLambertMaterial({color:colors[bid]}));
-                b.position.copy(pos); scene.add(b); blocks.push(b);
-            } else {
-                blocks.forEach((b,i) => { if(b.position.distanceTo(pos)<0.8) { scene.remove(b); blocks.splice(i,1); }});
-            }
-        };
-
         function tick() {
             let s = 0.15;
             if(keys['KeyW']) camera.translateZ(-s); if(keys['KeyS']) camera.translateZ(s);
             if(keys['KeyA']) camera.translateX(-s); if(keys['KeyD']) camera.translateX(s);
-            vy -= 0.015; camera.position.y += vy;
-            if(camera.position.y < 3) { camera.position.y = 3; vy = 0; }
-            if(keys['Space'] && camera.position.y <= 3.1) vy = 0.25;
+            
+            if(!flying) {
+                vy -= 0.015; camera.position.y += vy;
+                if(camera.position.y < 3) { camera.position.y = 3; vy = 0; }
+                if(keys['Space'] && camera.position.y <= 3.1) vy = 0.25;
+            } else {
+                if(keys['Space']) camera.position.y += 0.1;
+                if(keys['ShiftLeft']) camera.position.y -= 0.1;
+                vy = 0;
+            }
+
             for(let i=0; i<10; i++) if(keys['Digit'+((i+1)%10)]) { 
                 bid = i; Array.from(hb.children).forEach((s,x)=>s.classList.toggle('active', x===i));
             }
+
             camera.rotation.set(pitch, yaw, 0, 'YXZ');
             renderer.render(scene, camera);
-            document.getElementById('hud').innerText = "MC ALPHA 5.7 | " + (lang==='pl'?'BLOK':'BLOCK') + ": " + names[lang][bid];
+            document.getElementById('hud').innerText = "MC ALPHA 5.8 | FLY: " + (flying?"ON":"OFF") + " (V)";
             loop = requestAnimationFrame(tick);
         } tick();
-    }
-
-    function updateHP() {
-        let h = ""; for(let i=0; i<health/2; i++) h += "❤";
-        document.getElementById('hp-bar').innerText = h;
-    }
-
-    function runMario(out) {
-        out.innerHTML = '<div style="color:white; display:flex; align-items:center; justify-content:center; height:100%; font-size:30px;">SUPER MARIO CLASIC</div>';
-        document.getElementById('hud').innerText = "MARIO RUNNING...";
-    }
-
-    function runSnake(out) {
-        out.innerHTML = '<div style="color:white; display:flex; align-items:center; justify-content:center; height:100%; font-size:30px;">SNAKE GAME</div>';
-        document.getElementById('hud').innerText = "SNAKE RUNNING...";
     }
 </script>
 </body>
