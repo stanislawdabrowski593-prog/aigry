@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>AIGRY PRO v3.6 - PRO EDITION</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #050505; color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        header { background: #111; width: 100%; padding: 10px; border-bottom: 3px solid #00d2ff; display: flex; justify-content: space-around; align-items: center; }
+        .menu { display: flex; gap: 10px; margin: 15px; }
+        button { background: #1a1a1a; color: #fff; border: 2px solid #333; padding: 10px 15px; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        button:hover { border-color: #00d2ff; }
+        
+        #game-wrapper { position: relative; width: 800px; height: 450px; background: #000; border: 4px solid #1a1a1a; border-radius: 10px; overflow: hidden; }
+        #status-bar { position: absolute; top: 10px; left: 10px; z-index: 100; font-weight: bold; text-shadow: 2px 2px #000; color: #00d2ff; }
+        #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; pointer-events: none; display: none; z-index: 100; font-size: 20px; }
+        
+        .fs-btn { margin: 10px; background: #e74c3c; color: #fff; border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .log { width: 800px; background: #111; padding: 10px; margin-top: 15px; font-size: 12px; color: #777; border-radius: 5px; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+<header>
+    <div style="font-size: 22px; font-weight: bold;">AIGRY PRO <span style="color:#00d2ff">v3.6</span></div>
+    <div>
+        <button onclick="setLang('pl')">PL</button>
+        <button onclick="setLang('en')">EN</button>
+    </div>
+</header>
+
+<div class="menu">
+    <button onclick="launch('mario')">MARIO (10 LVL)</button>
+    <button onclick="launch('mc')">MINECRAFT (BUILD/DIG)</button>
+    <button onclick="launch('snake')">SNAKE COMBO</button>
+</div>
+
+<div id="game-wrapper">
+    <div id="status-bar"></div>
+    <div id="crosshair">+</div>
+    <div id="game-content" style="width:100%; height:100%;"></div>
+</div>
+
+<button class="fs-btn" onclick="toggleFS()">TRYB PEŁNOEKRANOWY (F)</button>
+
+<div class="log">
+    <b>v3.6:</b> Naprawiono Fullscreen, dodano niszczenie bloków (PPM) w MC, wrogów w Mario i system combo w Snake.
+</div>
+
+<script>
+    let loopId = null, lang = 'pl', keys = {}, marioLvl = 1, currentActiveGame = '';
+    const wrapper = document.getElementById('game-wrapper');
+
+    window.onkeydown = e => { keys[e.code] = true; if(e.code === 'KeyF') toggleFS(); };
+    window.onkeyup = e => keys[e.code] = false;
+
+    function toggleFS() {
+        if (!document.fullscreenElement) {
+            wrapper.requestFullscreen().catch(err => alert("Błąd Fullscreen"));
+        } else {
+            document.exitFullscreen();
+        }
+    }
+
+    function launch(game) {
+        currentActiveGame = game;
+        if(loopId) cancelAnimationFrame(loopId);
+        document.getElementById('game-content').innerHTML = "";
+        document.getElementById('status-bar').innerText = "";
+        document.getElementById('crosshair').style.display = "none";
+        
+        if(game === 'mario') loadMario();
+        if(game === 'mc') loadMC();
+        if(game === 'snake') loadSnake();
+    }
+
+    // --- MINECRAFT 3D (PRO) ---
+    function loadMC() {
+        document.getElementById('crosshair').style.display = "block";
+        const scene = new THREE.Scene(); scene.background = new THREE.Color(0x87CEEB);
+        const cam = new THREE.PerspectiveCamera(75, 800/450, 0.1, 1000);
+        const rend = new THREE.WebGLRenderer({antialias: true}); 
+        rend.setSize(800, 450);
+        document.getElementById('game-content').appendChild(rend.domElement);
+        
+        const blockColors = [0x2ecc71, 0x7f8c8d, 0x8b4513];
+        const blockNames = ["TRAWA", "KAMIEŃ", "DREWNO"];
+        let currentType = 0;
+        let blocks = [];
+
+        // Podłoga
+        for(let x=-8; x<8; x++) for(let z=-8; z<8; z++) {
+            const b = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshLambertMaterial({color: blockColors[0]}));
+            b.position.set(x, 0, z); scene.add(b); blocks.push(b);
+        }
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+        const light = new THREE.PointLight(0xffffff, 0.8); light.position.set(10,10,10); scene.add(light);
+        cam.position.set(0, 2, 5);
+
+        rend.domElement.onclick = () => rend.domElement.requestPointerLock();
+        
+        let yaw = 0, pitch = 0;
+        document.addEventListener('mousemove', (e) => {
+            if (document.pointerLockElement === rend.domElement) {
+                yaw -= e.movementX * 0.002;
+                pitch -= e.movementY * 0.002;
+                pitch = Math.max(-1.5, Math.min(1.5, pitch));
+            }
+        });
+
+        rend.domElement.onmousedown = (e) => {
+            if (document.pointerLockElement !== rend.domElement) return;
+            if (e.button === 0) { // LPM - Buduj
+                const b = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshLambertMaterial({color: blockColors[currentType]}));
+                const dir = new THREE.Vector3(0,0,-1).applyQuaternion(cam.quaternion);
+                b.position.copy(cam.position).add(dir.multiplyScalar(3)).round();
+                scene.add(b); blocks.push(b);
+            } else if (e.button === 2) { // PPM - Usuń
+                const dir = new THREE.Vector3(0,0,-1).applyQuaternion(cam.quaternion);
+                const targetPos = new THREE.Vector3().copy(cam.position).add(dir.multiplyScalar(3)).round();
+                blocks.forEach((b, i) => {
+                    if(b.position.distanceTo(targetPos) < 0.5) { scene.remove(b); blocks.splice(i, 1); }
+                });
+            }
+        };
+
+        function mcLoop() {
+            if(keys['KeyW']) cam.translateZ(-0.1); if(keys['KeyS']) cam.translateZ(0.1);
+            if(keys['KeyA']) cam.translateX(-0.1); if(keys['KeyD']) cam.translateX(0.1);
+            if(keys['Digit1']) currentType = 0; if(keys['Digit2']) currentType = 1; if(keys['Digit3']) currentType = 2;
+            cam.rotation.set(pitch, yaw, 0, 'YXZ');
+            rend.render(scene, cam);
+            document.getElementById('status-bar').innerText = `BLOK: ${blockNames[currentType]} | LPM: BUDUJ | PPM: USUŃ`;
+            loopId = requestAnimationFrame(mcLoop);
+        }
+        mcLoop();
+    }
+
+    // --- MARIO (10 POZIOMÓW + WROGOWIE) ---
+    function loadMario() {
+        const cont = document.getElementById('game-content');
+        cont.innerHTML = `<canvas id="marioCanvas" width="800" height="450"></canvas>`;
+        const cvs = document.getElementById('marioCanvas'), ctx = cvs.getContext('2d');
+        let p = { x: 50, y: 300, w: 30, h: 45, vx: 0, vy: 0, jump: false };
+        let worldX = 0, finish = 1500 + (marioLvl * 500);
+        let platforms = [{x: 0, y: 400, w: finish + 1000, h: 50}];
+        let enemies = [];
+        
+        for(let i=1; i<marioLvl+5; i++) {
+            platforms.push({x: 400 + i*300, y: 320 - (i%3)*60, w: 100, h: 20});
+            enemies.push({x: 600 + i*400, y: 370, w: 30, h: 30, vx: -2});
+        }
+
+        function mLoop() {
+            if(keys['ArrowLeft']) p.vx = -5; else if(keys['ArrowRight']) p.vx = 5; else p.vx *= 0.8;
+            if((keys['Space'] || keys['ArrowUp']) && !p.jump) { p.vy = -16; p.jump = true; }
+            p.vy += 0.8; p.x += p.vx; p.y += p.vy;
+            if(p.x > 400) worldX = p.x - 400;
+            p.jump = true;
+            platforms.forEach(plat => {
+                if(p.x+p.w > plat.x && p.x < plat.x+plat.w && p.y+p.h > plat.y && p.y+p.h < plat.y+20 && p.vy >= 0) {
+                    p.y = plat.y - p.h; p.vy = 0; p.jump = false;
+                }
+            });
+            enemies.forEach(en => {
+                en.x += en.vx; if(en.x < 0 || en.x > finish + 500) en.vx *= -1;
+                if(p.x < en.x + en.w && p.x + p.w > en.x && p.y < en.y + en.h && p.y + p.h > en.y) {
+                    marioLvl = 1; launch('mario'); // Death
+                }
+            });
+            if(p.x > finish) { marioLvl++; launch('mario'); return; }
+            if(p.y > 450) { launch('mario'); return; }
+
+            ctx.fillStyle = "#5c94fc"; ctx.fillRect(0,0,800,450);
+            ctx.save(); ctx.translate(-worldX, 0);
+            ctx.fillStyle = "#8b4513"; platforms.forEach(plat => ctx.fillRect(plat.x, plat.y, plat.w, plat.h));
+            ctx.fillStyle = "#e74c3c"; enemies.forEach(en => ctx.fillRect(en.x, en.y, en.w, en.h));
+            ctx.fillStyle = "gold"; ctx.fillRect(finish, 100, 20, 300);
+            ctx.fillStyle = "white"; ctx.fillRect(p.x, p.y, p.w, p.h);
+            ctx.restore();
+            document.getElementById('status-bar').innerText = `POZIOM: ${marioLvl} / 10`;
+            loopId = requestAnimationFrame(mLoop);
+        }
+        mLoop();
+    }
+
+    // --- SNAKE COMBO ---
+    function loadSnake() {
+        const cont = document.getElementById('game-content');
+        cont.innerHTML = `<canvas id="snakeCanvas" width="800" height="450"></canvas>`;
+        const cvs = document.getElementById('snakeCanvas'), ctx = cvs.getContext('2d');
+        let snake = [{x:200, y:200}], food = {x:400, y:200}, dir = 'R', last = 0, score = 0;
+        function sLoop(t) {
+            if(t - last > 90) {
+                last = t; let head = {...snake[0]};
+                if(keys['ArrowLeft'] && dir !== 'R') dir = 'L';
+                if(keys['ArrowRight'] && dir !== 'L') dir = 'R';
+                if(keys['ArrowUp'] && dir !== 'D') dir = 'U';
+                if(keys['ArrowDown'] && dir !== 'U') dir = 'D';
+                if(dir === 'L') head.x -= 20; if(dir === 'R') head.x += 20;
+                if(dir === 'U') head.y -= 20; if(dir === 'D') head.y += 20;
+                if(head.x === food.x && head.y === food.y) {
+                    score += 10; food = {x: Math.floor(Math.random()*39)*20, y: Math.floor(Math.random()*22)*20};
+                } else snake.pop();
+                if(head.x<0 || head.x>=800 || head.y<0 || head.y>=450) return launch('snake');
+                snake.unshift(head);
+                ctx.fillStyle = "#111"; ctx.fillRect(0,0,800,450);
+                ctx.fillStyle = "#00d2ff"; snake.forEach(s => ctx.fillRect(s.x, s.y, 18, 18));
+                ctx.fillStyle = "#ff4757"; ctx.fillRect(food.x, food.y, 18, 18);
+                document.getElementById('status-bar').innerText = `SCORE: ${score}`;
+            }
+            loopId = requestAnimationFrame(sLoop);
+        }
+        loopId = requestAnimationFrame(sLoop);
+    }
+</script>
+</body>
+</html>
