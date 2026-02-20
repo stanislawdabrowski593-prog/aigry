@@ -2,114 +2,103 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>AIGRY - Centrum Gier</title>
+    <title>AIGRY - Multigame Platform</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        :root { --mc-alpha: #2ecc71; --ui-dark: #111; }
-        body { font-family: 'Segoe UI', sans-serif; background: #050505; color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
+        :root { --mc-alpha: #2ecc71; --ui-dark: #111; --accent: #00d2ff; }
+        body { font-family: 'Segoe UI', sans-serif; background: #050505; color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; }
         
-        header { background: var(--ui-dark); width: 100%; padding: 15px; border-bottom: 3px solid #333; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+        header { background: var(--ui-dark); width: 100%; padding: 10px 20px; border-bottom: 3px solid #333; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
         .nav-buttons { display: flex; gap: 10px; }
-        .game-btn { background: #222; color: #fff; border: 1px solid #444; padding: 10px 20px; cursor: pointer; border-radius: 5px; font-weight: bold; transition: 0.3s; }
-        .game-btn:hover { background: #333; border-color: #666; }
+        .game-btn { background: #222; color: #fff; border: 1px solid #444; padding: 10px 18px; cursor: pointer; border-radius: 5px; font-weight: bold; transition: 0.2s; }
+        .game-btn:hover { background: #333; border-color: var(--accent); }
         .active-mc { border-color: var(--mc-alpha) !important; color: var(--mc-alpha); }
 
-        #main-layout { display: flex; width: 1200px; height: 650px; background: #000; border: 4px solid #1a1a1a; border-radius: 10px; margin-top: 15px; overflow: hidden; }
-        #game-screen { flex-grow: 1; position: relative; }
+        #main-layout { display: flex; width: 1200px; height: 600px; background: #000; border: 4px solid #1a1a1a; border-radius: 10px; margin-top: 15px; position: relative; }
+        #game-screen { flex-grow: 1; position: relative; overflow: hidden; }
         
-        /* PANEL AKTUALIZACJI - TYLKO MINECRAFT AI */
-        #alpha-log { width: 300px; background: #0d0d0d; border-left: 2px solid #222; padding: 20px; font-size: 13px; color: #aaa; overflow-y: auto; }
-        #alpha-log h3 { color: var(--mc-alpha); margin-top: 0; font-size: 16px; text-transform: uppercase; border-bottom: 1px solid #222; padding-bottom: 10px; }
-        .version-box { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px dashed #222; }
-        .v-num { color: var(--mc-alpha); font-weight: bold; margin-right: 5px; }
+        /* Panel aktualizacji - UKRYWANY */
+        #alpha-log { width: 280px; background: #0d0d0d; border-left: 2px solid #222; padding: 20px; font-size: 13px; color: #aaa; display: none; overflow-y: auto; }
+        #alpha-log h3 { color: var(--mc-alpha); margin-top: 0; }
 
-        #hud { position: absolute; top: 20px; left: 20px; z-index: 10; font-family: 'Courier New', monospace; color: #fff; text-shadow: 2px 2px #000; pointer-events: none; }
+        #hud { position: absolute; top: 20px; left: 20px; z-index: 10; font-family: monospace; color: #fff; text-shadow: 2px 2px #000; pointer-events: none; }
         #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #fff; display: none; font-size: 24px; z-index: 5; opacity: 0.5; }
         #hp-bar { position: absolute; bottom: 85px; left: 20px; z-index: 10; font-size: 20px; }
         
         .hotbar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: none; gap: 6px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 5px; border: 2px solid #333; }
-        .slot { width: 38px; height: 38px; border: 2px solid #555; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
+        .slot { width: 35px; height: 35px; border: 2px solid #555; display: flex; align-items: center; justify-content: center; font-size: 12px; }
         .slot.active { border-color: var(--mc-alpha); background: rgba(46, 204, 113, 0.2); }
+
+        .lang-btn { background: transparent; color: #666; border: 1px solid #333; cursor: pointer; padding: 3px 8px; font-size: 12px; margin-left: 5px; }
+        .lang-btn.active { color: var(--accent); border-color: var(--accent); }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
 <header>
-    <div style="font-weight: 900; font-size: 22px;">AIGRY <span style="color:#666">v5.6</span></div>
+    <div style="font-weight: 900; font-size: 20px; letter-spacing: 1px;">AIGRY: <span style="color:var(--accent)">MULTIGAME</span></div>
     <div class="nav-buttons">
-        <button class="game-btn" onclick="run('mario')">MARIO</button>
-        <button class="game-btn active-mc" onclick="run('mc')">MINECRAFT AI [ALPHA]</button>
-        <button class="game-btn" onclick="run('snake')">SNAKE</button>
+        <button class="game-btn" onclick="run('mario')" id="btn-mario">MARIO</button>
+        <button class="game-btn" onclick="run('mc')" id="btn-mc">MC AI ALPHA</button>
+        <button class="game-btn" onclick="run('snake')" id="btn-snake">SNAKE</button>
     </div>
-    <button class="game-btn" style="border-color: #555;" onclick="fullscr()">PEŁNY EKRAN</button>
+    <div>
+        <button class="lang-btn active" id="l-pl" onclick="setLang('pl')">PL</button>
+        <button class="lang-btn" id="l-en" onclick="setLang('en')">EN</button>
+    </div>
 </header>
 
 <div id="main-layout">
     <div id="game-screen">
-        <div id="hud">Wybierz grę...</div>
+        <div id="hud">Wybierz grę / Select a game</div>
         <div id="hp-bar"></div>
         <div id="crosshair">+</div>
-        <div id="webgl-output" style="width:100%; height:100%;"></div>
+        <div id="viewport" style="width:100%; height:100%;"></div>
         <div id="hotbar" class="hotbar"></div>
     </div>
     
     <div id="alpha-log">
-        <h3>AKTUALIZACJE: MC AI</h3>
-        
-        <div class="version-box">
-            <span class="v-num">Alpha 5.6:</span>
-            <ul>
-                <li>Dodano system "Alpha Terrain" v2.</li>
-                <li>Płynniejsze poruszanie kamerą.</li>
-                <li>Naprawiono kolizję z blokami bocznymi.</li>
-                <li>Optymalizacja renderowania cieni.</li>
-            </ul>
-        </div>
-
-        <div class="version-box">
-            <span class="v-num">Alpha 5.5:</span>
-            <ul>
-                <li>Generator pagórkowatego terenu.</li>
-                <li>Integracja HP z interfejsem gry.</li>
-                <li>Dynamiczne niebo (odcienie błękitu).</li>
-            </ul>
-        </div>
-
-        <div class="version-box">
-            <span class="v-num">Alpha 5.4:</span>
-            <ul>
-                <li>Fall Damage (obrażenia od upadku).</li>
-                <li>System Pochodni (oświetlenie pod 0).</li>
-                <li>Podstawowy wybór 10 surowców.</li>
-            </ul>
-        </div>
-
-        <small style="color:#444;">Wszystkie zmiany dotyczą wyłącznie silnika Minecraft AI.</small>
+        <h3 id="log-title">DZIENNIK ALPHA</h3>
+        <div id="log-content"></div>
     </div>
 </div>
 
 <script>
-    let scene, camera, renderer, loop, keys = {}, blocks = [], bid = 0, health = 10;
+    let scene, camera, renderer, loop, keys = {}, blocks = [], bid = 0, health = 10, lang = 'pl';
     const colors = [0x2ecc71, 0x7f8c8d, 0x8b4513, 0x27ae60, 0xadefff, 0xd35400, 0x3498db, 0x2c3e50, 0xf1c40f, 0xffff00];
-    const names = ["TRAWA", "KAMIEŃ", "DREWNO", "LIŚCIE", "SZKŁO", "CEGŁY", "DIAMENT", "WĘGIEL", "ZŁOTO", "POCHODNIA"];
+    const names = {
+        pl: ["TRAWA", "KAMIEŃ", "DREWNO", "LIŚCIE", "SZKŁO", "CEGŁY", "DIAMENT", "WĘGIEL", "ZŁOTO", "POCHODNIA"],
+        en: ["GRASS", "STONE", "WOOD", "LEAVES", "GLASS", "BRICKS", "DIAMOND", "COAL", "GOLD", "TORCH"]
+    };
 
-    window.onkeydown = e => { keys[e.code] = true; if(e.code === 'KeyF') fullscr(); };
+    const updates = {
+        pl: "<b>Alpha 5.7:</b><br>• Dynamiczny panel aktualizacji<br>• System języków PL/EN<br>• Poprawiona nazwa platformy<br><br><b>Alpha 5.6:</b><br>• Nowy teren Alpha Terrain v2",
+        en: "<b>Alpha 5.7:</b><br>• Dynamic update panel<br>• Language system PL/EN<br>• Fixed platform name<br><br><b>Alpha 5.6:</b><br>• New Alpha Terrain v2"
+    };
+
+    window.onkeydown = e => keys[e.code] = true;
     window.onkeyup = e => keys[e.code] = false;
 
-    function fullscr() {
-        const layout = document.getElementById('main-layout');
-        if (!document.fullscreenElement) layout.requestFullscreen();
-        else document.exitFullscreen();
+    function setLang(l) {
+        lang = l;
+        document.getElementById('l-pl').classList.toggle('active', l === 'pl');
+        document.getElementById('l-en').classList.toggle('active', l === 'en');
+        document.getElementById('log-title').innerText = l === 'pl' ? "DZIENNIK ALPHA" : "ALPHA LOG";
+        document.getElementById('log-content').innerHTML = updates[l];
     }
+    setLang('pl');
 
     function run(game) {
         if(loop) cancelAnimationFrame(loop);
-        const out = document.getElementById('webgl-output');
+        const out = document.getElementById('viewport');
         out.innerHTML = "";
+        
+        // Zarządzanie panelem aktualizacji
+        document.getElementById('alpha-log').style.display = (game === 'mc') ? "block" : "none";
         document.getElementById('hotbar').style.display = "none";
         document.getElementById('crosshair').style.display = "none";
         document.getElementById('hp-bar').innerHTML = "";
-        
+
         if(game === 'mario') runMario(out);
         if(game === 'mc') runMC(out);
         if(game === 'snake') runSnake(out);
@@ -119,7 +108,7 @@
         health = 10;
         document.getElementById('crosshair').style.display = "block";
         document.getElementById('hotbar').style.display = "flex";
-        updateHealth();
+        updateHP();
 
         scene = new THREE.Scene(); scene.background = new THREE.Color(0x87CEEB);
         camera = new THREE.PerspectiveCamera(75, out.clientWidth / out.clientHeight, 0.1, 1000);
@@ -128,22 +117,19 @@
         out.appendChild(renderer.domElement);
 
         const hb = document.getElementById('hotbar'); hb.innerHTML = "";
-        names.forEach((n, i) => {
+        names[lang].forEach((n, i) => {
             let s = document.createElement('div'); s.className = 'slot' + (i===0?' active':'');
             s.style.background = "#" + colors[i].toString(16).padStart(6, '0');
             s.innerText = (i+1)%10; hb.appendChild(s);
         });
 
-        const geo = new THREE.BoxGeometry(1,1,1);
-        for(let x=-10; x<10; x++) for(let z=-10; z<10; z++) {
-            const h = Math.floor(Math.sin(x/4)*Math.cos(z/4)*2);
-            const b = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({color:colors[0]}));
-            b.position.set(x, h, z); scene.add(b); blocks.push(b);
+        for(let x=-8; x<8; x++) for(let z=-8; z<8; z++) {
+            const b = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshLambertMaterial({color:colors[0]}));
+            b.position.set(x, Math.floor(Math.sin(x/3)*2), z); scene.add(b); blocks.push(b);
         }
-
         scene.add(new THREE.AmbientLight(0xffffff, 0.8));
         camera.position.set(0, 5, 5);
-        let yaw=0, pitch=0, vy=0, onG=false;
+        let yaw=0, pitch=0, vy=0;
 
         renderer.domElement.onclick = () => renderer.domElement.requestPointerLock();
         document.onmousemove = e => {
@@ -158,7 +144,7 @@
             const dir = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
             const pos = new THREE.Vector3().copy(camera.position).add(dir.multiplyScalar(4)).round();
             if(e.button === 0) {
-                const b = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({color:colors[bid]}));
+                const b = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshLambertMaterial({color:colors[bid]}));
                 b.position.copy(pos); scene.add(b); blocks.push(b);
             } else {
                 blocks.forEach((b,i) => { if(b.position.distanceTo(pos)<0.8) { scene.remove(b); blocks.splice(i,1); }});
@@ -170,33 +156,31 @@
             if(keys['KeyW']) camera.translateZ(-s); if(keys['KeyS']) camera.translateZ(s);
             if(keys['KeyA']) camera.translateX(-s); if(keys['KeyD']) camera.translateX(s);
             vy -= 0.015; camera.position.y += vy;
-            if(camera.position.y < 3) { 
-                if(vy < -0.45) { health -= 2; updateHealth(); }
-                camera.position.y = 3; vy = 0; onG = true; 
-            } else onG = false;
-            if(keys['Space'] && onG) vy = 0.25;
+            if(camera.position.y < 3) { camera.position.y = 3; vy = 0; }
+            if(keys['Space'] && camera.position.y <= 3.1) vy = 0.25;
             for(let i=0; i<10; i++) if(keys['Digit'+((i+1)%10)]) { 
                 bid = i; Array.from(hb.children).forEach((s,x)=>s.classList.toggle('active', x===i));
             }
             camera.rotation.set(pitch, yaw, 0, 'YXZ');
             renderer.render(scene, camera);
-            document.getElementById('hud').innerText = "MC AI ALPHA 5.6 | BLOK: " + names[bid];
+            document.getElementById('hud').innerText = "MC ALPHA 5.7 | " + (lang==='pl'?'BLOK':'BLOCK') + ": " + names[lang][bid];
             loop = requestAnimationFrame(tick);
         } tick();
     }
 
-    function updateHealth() {
+    function updateHP() {
         let h = ""; for(let i=0; i<health/2; i++) h += "❤";
         document.getElementById('hp-bar').innerText = h;
-        if(health <= 0) { alert("Zginąłeś!"); run('mc'); }
     }
 
     function runMario(out) {
-        out.innerHTML = '<div style="color:white; padding:50px;">SUPER MARIO - STABILNA</div>';
+        out.innerHTML = '<div style="color:white; display:flex; align-items:center; justify-content:center; height:100%; font-size:30px;">SUPER MARIO CLASIC</div>';
+        document.getElementById('hud').innerText = "MARIO RUNNING...";
     }
 
     function runSnake(out) {
-        out.innerHTML = '<div style="color:white; padding:50px;">SNAKE - STABILNA</div>';
+        out.innerHTML = '<div style="color:white; display:flex; align-items:center; justify-content:center; height:100%; font-size:30px;">SNAKE GAME</div>';
+        document.getElementById('hud').innerText = "SNAKE RUNNING...";
     }
 </script>
 </body>
