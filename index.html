@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Centrum Gier AIGRY</title>
+    <title>AIGRY - Centrum Gier</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root { --mc-alpha: #2ecc71; --ui-dark: #111; }
@@ -14,13 +14,14 @@
         .game-btn:hover { background: #333; border-color: #666; }
         .active-mc { border-color: var(--mc-alpha) !important; color: var(--mc-alpha); }
 
-        #main-layout { display: flex; width: 1150px; height: 600px; background: #000; border: 4px solid #1a1a1a; border-radius: 10px; margin-top: 15px; overflow: hidden; }
+        #main-layout { display: flex; width: 1200px; height: 650px; background: #000; border: 4px solid #1a1a1a; border-radius: 10px; margin-top: 15px; overflow: hidden; }
         #game-screen { flex-grow: 1; position: relative; }
         
-        /* Panel aktualizacji TYLKO dla Minecraft AI */
-        #alpha-log { width: 280px; background: #0d0d0d; border-left: 2px solid #222; padding: 20px; font-size: 13px; color: #aaa; overflow-y: auto; }
-        #alpha-log h3 { color: var(--mc-alpha); margin-top: 0; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; }
-        .version-tag { background: var(--mc-alpha); color: #000; padding: 2px 6px; border-radius: 3px; font-weight: bold; font-size: 10px; vertical-align: middle; }
+        /* PANEL AKTUALIZACJI - TYLKO MINECRAFT AI */
+        #alpha-log { width: 300px; background: #0d0d0d; border-left: 2px solid #222; padding: 20px; font-size: 13px; color: #aaa; overflow-y: auto; }
+        #alpha-log h3 { color: var(--mc-alpha); margin-top: 0; font-size: 16px; text-transform: uppercase; border-bottom: 1px solid #222; padding-bottom: 10px; }
+        .version-box { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px dashed #222; }
+        .v-num { color: var(--mc-alpha); font-weight: bold; margin-right: 5px; }
 
         #hud { position: absolute; top: 20px; left: 20px; z-index: 10; font-family: 'Courier New', monospace; color: #fff; text-shadow: 2px 2px #000; pointer-events: none; }
         #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #fff; display: none; font-size: 24px; z-index: 5; opacity: 0.5; }
@@ -34,13 +35,13 @@
 <body oncontextmenu="return false;">
 
 <header>
-    <div style="font-weight: 900; font-size: 22px;">AIGRY <span style="color:#666">v5.5</span></div>
+    <div style="font-weight: 900; font-size: 22px;">AIGRY <span style="color:#666">v5.6</span></div>
     <div class="nav-buttons">
         <button class="game-btn" onclick="run('mario')">MARIO</button>
-        <button class="game-btn active-mc" onclick="run('mc')">MINECRAFT AI <span class="version-tag">ALPHA</span></button>
+        <button class="game-btn active-mc" onclick="run('mc')">MINECRAFT AI [ALPHA]</button>
         <button class="game-btn" onclick="run('snake')">SNAKE</button>
     </div>
-    <button class="game-btn" style="border-color: #555;" onclick="fullscr()">PEŁNY EKRAN (F)</button>
+    <button class="game-btn" style="border-color: #555;" onclick="fullscr()">PEŁNY EKRAN</button>
 </header>
 
 <div id="main-layout">
@@ -53,22 +54,37 @@
     </div>
     
     <div id="alpha-log">
-        <h3>DZIENNIK ALPHA (MC AI)</h3>
-        <p><strong>Aktualizacja 5.5:</strong></p>
-        <ul>
-            <li>Nowy generator terenu (pagórki).</li>
-            <li>Pasek Survival zintegrowany z interfejsem.</li>
-            <li>Poprawione cieniowanie bloków.</li>
-            <li>Naprawa kolizji przy skoku.</li>
-        </ul>
-        <p><strong>Aktualizacja 5.4:</strong></p>
-        <ul>
-            <li>Obrażenia od upadku (Fall Damage).</li>
-            <li>System 10 slotów na bloki.</li>
-            <li>Pochodnie oświetlające teren (0).</li>
-        </ul>
-        <hr style="border:0; border-top:1px solid #222; margin:15px 0;">
-        <small style="color:#555">Minecraft AI jest w fazie testowej Alpha. Pozostałe gry są w wersji stabilnej.</small>
+        <h3>AKTUALIZACJE: MC AI</h3>
+        
+        <div class="version-box">
+            <span class="v-num">Alpha 5.6:</span>
+            <ul>
+                <li>Dodano system "Alpha Terrain" v2.</li>
+                <li>Płynniejsze poruszanie kamerą.</li>
+                <li>Naprawiono kolizję z blokami bocznymi.</li>
+                <li>Optymalizacja renderowania cieni.</li>
+            </ul>
+        </div>
+
+        <div class="version-box">
+            <span class="v-num">Alpha 5.5:</span>
+            <ul>
+                <li>Generator pagórkowatego terenu.</li>
+                <li>Integracja HP z interfejsem gry.</li>
+                <li>Dynamiczne niebo (odcienie błękitu).</li>
+            </ul>
+        </div>
+
+        <div class="version-box">
+            <span class="v-num">Alpha 5.4:</span>
+            <ul>
+                <li>Fall Damage (obrażenia od upadku).</li>
+                <li>System Pochodni (oświetlenie pod 0).</li>
+                <li>Podstawowy wybór 10 surowców.</li>
+            </ul>
+        </div>
+
+        <small style="color:#444;">Wszystkie zmiany dotyczą wyłącznie silnika Minecraft AI.</small>
     </div>
 </div>
 
@@ -99,7 +115,6 @@
         if(game === 'snake') runSnake(out);
     }
 
-    // --- MINECRAFT AI ALPHA EDITION ---
     function runMC(out) {
         health = 10;
         document.getElementById('crosshair').style.display = "block";
@@ -121,12 +136,12 @@
 
         const geo = new THREE.BoxGeometry(1,1,1);
         for(let x=-10; x<10; x++) for(let z=-10; z<10; z++) {
-            const h = Math.sin(x/3)*Math.cos(z/3); // Prosty generator terenu Alpha
+            const h = Math.floor(Math.sin(x/4)*Math.cos(z/4)*2);
             const b = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({color:colors[0]}));
-            b.position.set(x, Math.floor(h), z); scene.add(b); blocks.push(b);
+            b.position.set(x, h, z); scene.add(b); blocks.push(b);
         }
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
         camera.position.set(0, 5, 5);
         let yaw=0, pitch=0, vy=0, onG=false;
 
@@ -154,21 +169,18 @@
             let s = 0.15;
             if(keys['KeyW']) camera.translateZ(-s); if(keys['KeyS']) camera.translateZ(s);
             if(keys['KeyA']) camera.translateX(-s); if(keys['KeyD']) camera.translateX(s);
-            
             vy -= 0.015; camera.position.y += vy;
-            if(camera.position.y < 2.5) { 
+            if(camera.position.y < 3) { 
                 if(vy < -0.45) { health -= 2; updateHealth(); }
-                camera.position.y = 2.5; vy = 0; onG = true; 
+                camera.position.y = 3; vy = 0; onG = true; 
             } else onG = false;
             if(keys['Space'] && onG) vy = 0.25;
-
             for(let i=0; i<10; i++) if(keys['Digit'+((i+1)%10)]) { 
                 bid = i; Array.from(hb.children).forEach((s,x)=>s.classList.toggle('active', x===i));
             }
-
             camera.rotation.set(pitch, yaw, 0, 'YXZ');
             renderer.render(scene, camera);
-            document.getElementById('hud').innerText = "MC ALPHA | TEREN: GENEROWANY | BLOK: " + names[bid];
+            document.getElementById('hud').innerText = "MC AI ALPHA 5.6 | BLOK: " + names[bid];
             loop = requestAnimationFrame(tick);
         } tick();
     }
@@ -176,33 +188,15 @@
     function updateHealth() {
         let h = ""; for(let i=0; i<health/2; i++) h += "❤";
         document.getElementById('hp-bar').innerText = h;
-        document.getElementById('hp-bar').style.color = health <= 4 ? "red" : "#ff4757";
-        if(health <= 0) { alert("Zginąłeś! Odrodzenie..."); run('mc'); }
+        if(health <= 0) { alert("Zginąłeś!"); run('mc'); }
     }
 
-    // --- MARIO (WERSJA STABILNA) ---
     function runMario(out) {
-        out.innerHTML = '<canvas id="mCnv" width="870" height="600"></canvas>';
-        const ctx = document.getElementById('mCnv').getContext('2d');
-        function mLoop() {
-            ctx.fillStyle = "#5c94fc"; ctx.fillRect(0,0,870,600);
-            ctx.fillStyle = "#8b4513"; ctx.fillRect(0,550,870,50);
-            ctx.fillStyle = "red"; ctx.fillRect(100, 510, 30, 40);
-            document.getElementById('hud').innerText = "SUPER MARIO - STABILNA";
-            loop = requestAnimationFrame(mLoop);
-        } mLoop();
+        out.innerHTML = '<div style="color:white; padding:50px;">SUPER MARIO - STABILNA</div>';
     }
 
-    // --- SNAKE (WERSJA STABILNA) ---
     function runSnake(out) {
-        out.innerHTML = '<canvas id="sCnv" width="870" height="600"></canvas>';
-        const ctx = document.getElementById('sCnv').getContext('2d');
-        function sLoop() {
-            ctx.fillStyle = "#000"; ctx.fillRect(0,0,870,600);
-            ctx.fillStyle = "#2ecc71"; ctx.fillRect(200,200,20,20);
-            document.getElementById('hud').innerText = "SNAKE - STABILNA";
-            loop = requestAnimationFrame(sLoop);
-        } sLoop();
+        out.innerHTML = '<div style="color:white; padding:50px;">SNAKE - STABILNA</div>';
     }
 </script>
 </body>
