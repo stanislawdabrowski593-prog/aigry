@@ -2,197 +2,160 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>AIGRY v9.0 - THE CORE</title>
+    <title>AIGRY GENESIS - Oficjalna Platforma</title>
     <style>
-        :root { --bg: #0f172a; --panel: #1e293b; --accent: #38bdf8; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; }
+        :root { --accent: #00ff88; --bg: #0a0a0a; --panel: #161616; }
+        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
         
-        header { background: var(--panel); width: 100%; padding: 15px 0; display: flex; justify-content: center; gap: 10px; border-bottom: 4px solid #334155; }
-        .btn { background: #0f172a; color: white; border: 1px solid var(--accent); padding: 10px 20px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: 0.3s; }
-        .btn:hover { background: var(--accent); color: black; }
+        nav { background: var(--panel); width: 100%; padding: 15px; border-bottom: 2px solid #333; display: flex; justify-content: center; gap: 10px; }
+        .btn { background: #000; color: var(--accent); border: 1px solid var(--accent); padding: 10px 20px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 10px var(--accent); }
 
-        #main-frame { display: flex; width: 1200px; height: 600px; margin-top: 20px; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        #canvas-wrap { flex-grow: 1; background: #000; position: relative; }
-        #sidebar { width: 350px; background: var(--panel); border-left: 2px solid #334155; padding: 20px; overflow-y: auto; }
+        #main-container { display: flex; width: 1200px; height: 600px; margin-top: 20px; border: 2px solid #333; background: #000; position: relative; }
+        #game-canvas { flex-grow: 1; }
+        #sidebar { width: 300px; background: var(--panel); border-left: 2px solid #333; padding: 20px; overflow-y: auto; }
         
-        .ver-badge { background: var(--accent); color: black; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 900; }
-        .log-entry { margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
-        .log-title { font-size: 14px; font-weight: bold; margin-bottom: 4px; color: var(--accent); }
-        .log-desc { font-size: 12px; color: #94a3b8; }
+        .update-card { border-left: 3px solid var(--accent); padding-left: 10px; margin-bottom: 15px; background: #222; padding: 10px; }
+        .v-tag { color: var(--accent); font-size: 12px; font-weight: bold; }
+        .v-desc { font-size: 13px; color: #ccc; margin-top: 5px; }
 
-        #hud { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 8px 15px; border-radius: 6px; border-left: 4px solid var(--accent); font-family: monospace; }
-        canvas { display: block; }
+        #hud { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 8px; border: 1px solid #444; pointer-events: none; font-family: monospace; }
     </style>
 </head>
 <body>
 
-<header>
-    <button class="btn" onclick="Engine.load('mario')">SUPER MARIO BROS</button>
-    <button class="btn" onclick="Engine.load('mc')">MINECRAFT ALPHA</button>
-    <button class="btn" onclick="Engine.load('snake')">SNAKE 2026</button>
-    <button class="btn" onclick="Engine.load('inv')">INVADERS</button>
-</header>
+<nav>
+    <button class="btn" onclick="Game.start('mc')">Minecraft AI Alpha</button>
+    <button class="btn" onclick="Game.start('mario')">Super Mario Bros</button>
+    <button class="btn" onclick="Game.start('inv')">Space Invaders</button>
+    <button class="btn" onclick="Game.start('snake')">Snake Genesis</button>
+</nav>
 
-<div id="main-frame">
-    <div id="canvas-wrap">
-        <div id="hud">Wybierz moduł gry...</div>
-        <canvas id="gameCanvas" width="850" height="600"></canvas>
-    </div>
+<div id="main-container">
+    <div id="hud">Wybierz moduł z menu powyżej...</div>
+    <canvas id="game-canvas" width="900" height="600"></canvas>
     <div id="sidebar">
-        <h2 id="side-title" style="margin-top:0">WITAJ</h2>
-        <div id="side-content">Kliknij przycisk, aby wczytać kod i historię wersji.</div>
+        <h2 id="side-title">Dziennik Zmian</h2>
+        <div id="side-logs">Wybierz grę, by zobaczyć wpisy.</div>
     </div>
 </div>
 
 <script>
-    const canvas = document.getElementById('gameCanvas');
+    const canvas = document.getElementById('game-canvas');
     const ctx = canvas.getContext('2d');
     const hud = document.getElementById('hud');
+    const sideLogs = document.getElementById('side-logs');
     const sideTitle = document.getElementById('side-title');
-    const sideContent = document.getElementById('side-content');
 
-    let keys = {};
+    let loop, keys = {};
     window.onkeydown = e => keys[e.code] = true;
     window.onkeyup = e => keys[e.code] = false;
 
-    // --- BAZA DANYCH GIER ---
     const DB = {
-        mario: {
-            name: "SUPER MARIO BROS",
-            logs: [
-                {v: "v9.0", t: "Pełny rebuild silnika fizyki skoku.", d: "Dzisiaj"},
-                {v: "v8.2", t: "Dodano klasyczne kolory NES i tło.", d: "Wczoraj"},
-                {v: "v1.0", t: "Pierwszy czerwony kwadrat.", d: "01.01.2026"}
-            ]
-        },
         mc: {
-            name: "MINECRAFT ALPHA",
-            logs: [
-                {v: "v9.0", t: "Dodano system kolizji ze ścianami i niebo.", d: "Dzisiaj"},
-                {v: "v0.5", t: "Alpha: Silnik renderowania ścian 3D.", d: "Luty 2026"},
-                {v: "v0.1", t: "Eksperymentalny Raycasting.", d: "Styczeń 2026"}
-            ]
+            name: "Minecraft AI Alpha",
+            logs: [{v: "v1.0", t: "Wydanie Alpha: Silnik Raycast 3D i pierwszy bot AI."}]
         },
-        snake: {
-            name: "SNAKE 2026",
-            logs: [
-                {v: "v9.0", t: "Naprawiono lag sterowania.", d: "Dzisiaj"},
-                {v: "v1.0", t: "Klasyczny Snake.", d: "2025"}
-            ]
+        mario: {
+            name: "Super Mario Bros",
+            logs: [{v: "v1.0", t: "Wydanie podstawowe: Fizyka skoku i kolizja z gruntem."}]
         },
         inv: {
-            name: "INVADERS CORE",
-            logs: [
-                {v: "v9.0", t: "Pociski mają teraz poprawną kolizję.", d: "Dzisiaj"},
-                {v: "v5.0", t: "Wrogowie poruszają się w dół.", d: "2026"}
-            ]
+            name: "Space Invaders",
+            logs: [{v: "v1.0", t: "Wydanie podstawowe: Walka z obcymi i licznik punktów."}]
+        },
+        snake: {
+            name: "Snake Genesis",
+            logs: [{v: "v1.0", t: "Wydanie podstawowe: Klasyczna pętla gry."}]
         }
     };
 
-    const Engine = {
-        loop: null,
-        
-        load(id) {
-            if(this.loop) clearInterval(this.loop);
-            ctx.clearRect(0,0,850,600);
+    const Game = {
+        start(id) {
+            if(loop) clearInterval(loop);
+            ctx.clearRect(0,0,900,600);
             
-            // Sidebar Update
-            const g = DB[id];
-            sideTitle.innerText = g.name;
-            sideContent.innerHTML = g.logs.map(l => `
-                <div class="log-entry">
-                    <div class="log-title"><span class="ver-badge">${l.v}</span> ${l.d}</div>
-                    <div class="log-desc">${l.t}</div>
+            // Update Sidebar
+            sideTitle.innerText = DB[id].name;
+            sideLogs.innerHTML = DB[id].logs.map(l => `
+                <div class="update-card">
+                    <span class="v-tag">${l.v}</span>
+                    <div class="v-desc">${l.t}</div>
                 </div>
             `).join('');
 
-            // Start Game
-            if(id === 'mario') this.runMario();
             if(id === 'mc') this.runMC();
-            if(id === 'snake') this.runSnake();
+            if(id === 'mario') this.runMario();
             if(id === 'inv') this.runInv();
-        },
-
-        runMario() {
-            let p = { x: 100, y: 500, vy: 0, j: false };
-            this.loop = setInterval(() => {
-                ctx.fillStyle = "#5c94fc"; ctx.fillRect(0,0,850,600);
-                ctx.fillStyle = "#e38a58"; ctx.fillRect(0,550,850,50);
-                if(keys['ArrowRight']) p.x += 6; if(keys['ArrowLeft']) p.x -= 6;
-                if(keys['Space'] && !p.j) { p.vy = -18; p.j = true; }
-                p.vy += 0.9; p.y += p.vy;
-                if(p.y > 500) { p.y = 500; p.vy = 0; p.j = false; }
-                ctx.fillStyle = "red"; ctx.fillRect(p.x, p.y, 40, 50);
-                hud.innerText = "MARIO CORE: Spacja + Strzałki";
-            }, 1000/60);
+            if(id === 'snake') this.runSnake();
         },
 
         runMC() {
             let px=2, py=2, pa=0;
-            const map = [[1,1,1,1,1,1],[1,0,0,0,0,1],[1,0,2,0,0,1],[1,0,0,3,0,1],[1,1,1,1,1,1]];
-            this.loop = setInterval(() => {
-                ctx.fillStyle = "#333"; ctx.fillRect(0,300,850,300);
-                ctx.fillStyle = "#87ceeb"; ctx.fillRect(0,0,850,300);
-                let ox = px, oy = py;
-                if(keys['KeyW']) { px += Math.cos(pa)*0.08; py += Math.sin(pa)*0.08; }
-                if(keys['KeyS']) { px -= Math.cos(pa)*0.08; py -= Math.sin(pa)*0.08; }
-                if(map[Math.floor(py)][Math.floor(px)]) { px = ox; py = oy; }
-                if(keys['KeyA']) pa -= 0.05; if(keys['KeyD']) pa += 0.05;
-
-                for(let i=0; i<85; i++) {
-                    let ra = pa - 0.5 + i/85, d=0, rx=px, ry=py;
-                    while(d<12) {
-                        d += 0.1; rx = px+Math.cos(ra)*d; ry = py+Math.sin(ra)*d;
-                        let b = map[Math.floor(ry)]?.[Math.floor(rx)];
-                        if(b) {
-                            let h = 600/d;
-                            ctx.fillStyle = b===1?"#2ecc71":b===2?"#f1c40f":"#3498db";
-                            ctx.fillRect(i*10, 300-h/2, 10, h); break;
+            let ai={x:5, y:5, a:0};
+            const map = [[1,1,1,1,1],[1,0,0,0,1],[1,0,2,0,1],[1,0,0,0,1],[1,1,1,1,1]];
+            loop = setInterval(() => {
+                ctx.fillStyle="#87ceeb"; ctx.fillRect(0,0,900,300);
+                ctx.fillStyle="#444"; ctx.fillRect(0,300,900,300);
+                if(keys['KeyW']) { px+=Math.cos(pa)*0.07; py+=Math.sin(pa)*0.07; }
+                if(keys['KeyA']) pa-=0.05; if(keys['KeyD']) pa+=0.05;
+                for(let i=0; i<90; i++) {
+                    let ra=pa-0.5+i/90, d=0, rx=px, ry=py;
+                    while(d<10) {
+                        d+=0.1; rx=px+Math.cos(ra)*d; ry=py+Math.sin(ra)*d;
+                        if(map[Math.floor(ry)]?.[Math.floor(rx)]) {
+                            let h=600/d; ctx.fillStyle="green"; ctx.fillRect(i*10, 300-h/2, 10, h); break;
                         }
                     }
                 }
-                hud.innerText = "MC ALPHA CORE: WASD";
+                hud.innerText = "MC AI ALPHA: WASD";
             }, 1000/60);
         },
 
-        runSnake() {
-            let s=[{x:10,y:10}], d='R', f={x:15,y:15}, sc=0, c=0;
-            this.loop = setInterval(() => {
-                if(c++ % 10 !== 0) return;
-                ctx.fillStyle = "#000"; ctx.fillRect(0,0,850,600);
-                if(keys['ArrowUp'] && d!=='D') d='U'; if(keys['ArrowDown'] && d!=='U') d='D';
-                if(keys['ArrowLeft'] && d!=='R') d='L'; if(keys['ArrowRight'] && d!=='L') d='R';
-                let h = {...s[0]};
-                if(d==='U') h.y--; if(d==='D') h.y++; if(d==='L') h.x--; if(d==='R') h.x++;
-                if(h.x<0||h.x>42||h.y<0||h.y>29) return Engine.load('snake');
-                s.unshift(h);
-                if(h.x===f.x && h.y===f.y) { sc++; f={x:Math.floor(Math.random()*40),y:Math.floor(Math.random()*25)}; } else s.pop();
-                ctx.fillStyle = "lime"; s.forEach(p=>ctx.fillRect(p.x*20, p.y*20, 19, 19));
-                ctx.fillStyle = "red"; ctx.fillRect(f.x*20, f.y*20, 19, 19);
-                hud.innerText = "SNAKE CORE | SCORE: " + sc;
+        runMario() {
+            let x=100, y=450, vy=0, j=false;
+            loop = setInterval(() => {
+                ctx.fillStyle="#5c94fc"; ctx.fillRect(0,0,900,600);
+                ctx.fillStyle="#e38a58"; ctx.fillRect(0,500,900,100);
+                if(keys['ArrowRight']) x+=5; if(keys['ArrowLeft']) x-=5;
+                if(keys['Space'] && !j) { vy=-15; j=true; }
+                vy+=0.8; y+=vy;
+                if(y>450) { y=450; vy=0; j=false; }
+                ctx.fillStyle="red"; ctx.fillRect(x,y,40,50);
+                hud.innerText = "MARIO: Spacja (Skok), Strzałki";
             }, 1000/60);
         },
 
         runInv() {
-            let sx=400, b=[], en=[], score=0;
-            for(let i=0; i<8; i++) en.push({x: i*90+50, y: 50, a: true});
-            this.loop = setInterval(() => {
-                ctx.fillStyle = "#000"; ctx.fillRect(0,0,850,600);
+            let sx=400, b=[], score=0;
+            loop = setInterval(() => {
+                ctx.fillStyle="#000"; ctx.fillRect(0,0,900,600);
                 if(keys['ArrowLeft']) sx-=7; if(keys['ArrowRight']) sx+=7;
-                if(keys['Space'] && b.length<3) { b.push({x:sx+18, y:540}); keys['Space']=false; }
+                if(keys['Space'] && b.length<5) { b.push({x:sx+18,y:540}); keys['Space']=false; }
                 ctx.fillStyle="#0f0"; ctx.fillRect(sx, 550, 40, 20);
-                b.forEach((p,i) => {
-                    p.y -= 10; ctx.fillStyle="yellow"; ctx.fillRect(p.x, p.y, 4, 15);
-                    en.forEach(e => { if(e.a && p.x>e.x && p.x<e.x+40 && p.y<e.y+30) { e.a=false; b.splice(i,1); score+=10; } });
-                });
-                en.forEach(e => { if(e.a) { ctx.fillStyle="white"; ctx.fillRect(e.x, e.y, 40, 30); e.y+=0.1; } });
-                hud.innerText = "INVADERS CORE | SCORE: " + score;
+                b.forEach((p,i)=>{ p.y-=10; ctx.fillStyle="yellow"; ctx.fillRect(p.x,p.y,4,10); if(p.y<0) b.splice(i,1); });
+                hud.innerText = "INVADERS: Strzelaj spacją! Wynik: " + score;
+            }, 1000/60);
+        },
+
+        runSnake() {
+            let s=[{x:10,y:10}], d='R', f={x:15,y:15}, c=0;
+            loop = setInterval(() => {
+                if(c++ % 8 !== 0) return;
+                ctx.fillStyle="#000"; ctx.fillRect(0,0,900,600);
+                if(keys['ArrowUp'] && d!='D') d='U'; if(keys['ArrowDown'] && d!='U') d='D';
+                if(keys['ArrowLeft'] && d!='R') d='L'; if(keys['ArrowRight'] && d!='L') d='R';
+                let h={...s[0]};
+                if(d=='U') h.y--; if(d=='D') h.y++; if(d=='L') h.x--; if(d=='R') h.x++;
+                if(h.x<0||h.x>44||h.y<0||h.y>29) return Game.start('snake');
+                s.unshift(h);
+                if(h.x==f.x && h.y==f.y) { f={x:Math.floor(Math.random()*40),y:Math.floor(Math.random()*25)}; } else s.pop();
+                ctx.fillStyle="lime"; s.forEach(p=>ctx.fillRect(p.x*20,p.y*20,18,18));
+                ctx.fillStyle="red"; ctx.fillRect(f.x*20,f.y*20,18,18);
+                hud.innerText = "SNAKE: Zbieraj czerwone punkty!";
             }, 1000/60);
         }
     };
-
-    // Auto-load Mario
-    Engine.load('mario');
 </script>
 </body>
 </html>
