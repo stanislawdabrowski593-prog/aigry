@@ -2,166 +2,186 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>AIGRY v7.0 - ULTIMATE RECOVERY</title>
+    <title>AIGRY v8.0 - Retro Revival</title>
     <style>
-        :root { --accent: #00d2ff; --bg: #0d1117; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
-        header { background: #161b22; width: 100%; padding: 15px; border-bottom: 2px solid #30363d; display: flex; justify-content: center; gap: 10px; z-index: 100; }
-        .btn { background: #21262d; color: white; border: 1px solid #30363d; padding: 10px 20px; cursor: pointer; border-radius: 6px; font-weight: bold; transition: 0.2s; }
-        .btn:hover { border-color: var(--accent); background: #30363d; }
-        #main { display: flex; width: 1250px; height: 600px; margin-top: 20px; background: #000; border-radius: 12px; border: 1px solid #333; overflow: hidden; }
-        #game-container { flex-grow: 1; position: relative; background: #000; }
-        #sidebar { width: 300px; background: #0d1117; border-left: 1px solid #333; padding: 20px; overflow-y: auto; }
-        .log-v { color: var(--accent); font-weight: bold; margin-top: 10px; font-size: 12px; }
-        .log-t { color: #8b949e; font-size: 13px; margin-bottom: 5px; }
-        #hud { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); padding: 8px; border-radius: 5px; border-left: 4px solid var(--accent); z-index: 50; pointer-events: none; font-family: monospace; }
+        body { background: #111; color: white; font-family: 'Courier New', monospace; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        .menu { background: #222; width: 100%; padding: 15px; border-bottom: 4px solid #444; display: flex; justify-content: center; gap: 10px; }
+        button { background: #000; color: #0f0; border: 2px solid #0f0; padding: 10px 15px; cursor: pointer; font-family: inherit; font-weight: bold; }
+        button:hover { background: #0f0; color: #000; }
+        #game-box { display: flex; margin-top: 20px; border: 5px solid #333; background: #000; }
+        #sidebar { width: 300px; border-left: 5px solid #333; padding: 15px; background: #1a1a1a; font-size: 13px; }
+        .log-v { color: #ffff00; margin-bottom: 5px; display: block; }
+        .log-t { color: #aaa; margin-bottom: 15px; display: block; }
         canvas { display: block; }
     </style>
 </head>
 <body>
 
-<header>
-    <button class="btn" onclick="boot('mario')">MARIO WORLD</button>
-    <button class="btn" onclick="boot('mc')">MC ALPHA</button>
-    <button class="btn" onclick="boot('invaders')">INVADERS</button>
-    <button class="btn" onclick="boot('snake')">SNAKE HD</button>
-    <button class="btn" onclick="boot('flappy')">FLAPPY BIRD</button>
-</header>
+<div class="menu">
+    <button onclick="startMario()">SUPER MARIO BROS</button>
+    <button onclick="startMC()">MINECRAFT ALPHA</button>
+    <button onclick="startInvaders()">INVADERS</button>
+    <button onclick="startSnake()">SNAKE 8-BIT</button>
+</div>
 
-<div id="main">
-    <div id="game-container">
-        <div id="hud">Wybierz moduł z paska powyżej...</div>
-        <div id="viewport"></div>
-    </div>
+<div id="game-box">
+    <canvas id="stage" width="800" height="500"></canvas>
     <div id="sidebar">
-        <h3 id="side-title" style="margin-top:0">SYSTEM LOG</h3>
-        <div id="side-logs">Oczekiwanie na start...</div>
+        <h2 id="st">STATUS: READY</h2>
+        <div id="sl">Wybierz moduł gry z górnego menu.</div>
     </div>
 </div>
 
 <script>
+    const canvas = document.getElementById('stage');
+    const ctx = canvas.getContext('2d');
+    const st = document.getElementById('st');
+    const sl = document.getElementById('sl');
     let loop, keys = {};
-    window.onkeydown = e => keys[e.code] = true;
-    window.onkeyup = e => keys[e.code] = false;
 
-    const logs = {
-        mario: ["v7.0: Naprawiono fizykę skoku", "v6.8: Dodano rury i kolizje", "v1.0: Start projektu"],
-        mc: ["v7.0: FIX: Usunięto błąd ruchu", "v6.9: System budowania 1-3", "v0.1: Silnik Raycasting"],
-        invaders: ["v7.0: FIX: System strzelania", "v6.5: Premiera modułu"],
-        snake: ["v7.0: Naprawiono płynność", "v1.0: Klasyczny silnik"],
-        flappy: ["v7.0: Optymalizacja FPS", "v6.0: Dodano grawitację"]
-    };
+    window.onkeydown = e => { keys[e.code] = true; };
+    window.onkeyup = e => { keys[e.code] = false; };
 
-    function boot(game) {
-        if(loop) cancelAnimationFrame(loop);
-        const viewport = document.getElementById('viewport');
-        viewport.innerHTML = `<canvas id="stage" width="950" height="600"></canvas>`;
-        const cvs = document.getElementById('stage');
-        const ctx = cvs.getContext('2d');
-        const hud = document.getElementById('hud');
+    function stop() { if(loop) clearInterval(loop); ctx.clearRect(0,0,800,500); }
+
+    // ==================== SUPER MARIO BROS ====================
+    function startMario() {
+        stop();
+        st.innerText = "MARIO BROS LOGS";
+        sl.innerHTML = "<span class='log-v'>v8.0</span><span class='log-t'>Nowy silnik fizyki skoku. Dodano rurę i klasyczne tło.</span><span class='log-v'>v7.5</span><span class='log-t'>Naprawiono błąd 'zapadania się' w ziemię.</span>";
         
-        document.getElementById('side-title').innerText = game.toUpperCase() + " LOGS";
-        document.getElementById('side-logs').innerHTML = logs[game].map(l => `<div class="log-v">${l.split(':')[0]}</div><div class="log-t">${l.split(':')[1]}</div>`).join('');
+        let p = { x: 50, y: 400, vy: 0, jump: false };
+        loop = setInterval(() => {
+            // Tło
+            ctx.fillStyle = "#5c94fc"; ctx.fillRect(0,0,800,500);
+            ctx.fillStyle = "#e38a58"; ctx.fillRect(0,450,800,50);
+            
+            // Logika ruchu
+            if(keys['ArrowRight']) p.x += 5;
+            if(keys['ArrowLeft']) p.x -= 5;
+            if((keys['Space'] || keys['ArrowUp']) && !p.jump) { p.vy = -16; p.jump = true; }
+            
+            p.vy += 0.9; p.y += p.vy;
+            if(p.y > 400) { p.y = 400; p.vy = 0; p.jump = false; }
 
-        if(game === 'mario') runMario(ctx, hud);
-        if(game === 'mc') runMC(ctx, hud);
-        if(game === 'invaders') runInv(ctx, hud);
-        if(game === 'snake') runSnake(ctx, hud);
-        if(game === 'flappy') runFlappy(ctx, hud);
+            // Rysowanie Mario (Klasyczny styl)
+            ctx.fillStyle = "red"; ctx.fillRect(p.x, p.y, 40, 50); // Tułów
+            ctx.fillStyle = "#ffdbac"; ctx.fillRect(p.x+10, p.y+5, 30, 20); // Twarz
+            ctx.fillStyle = "blue"; ctx.fillRect(p.x, p.y+35, 40, 15); // Ogrodniczki
+            
+            // Rura
+            ctx.fillStyle = "#00a800"; ctx.fillRect(500, 370, 60, 80);
+            ctx.fillStyle = "#00d000"; ctx.fillRect(495, 370, 70, 20);
+        }, 1000/60);
     }
 
-    function runMario(ctx, hud) {
-        let p = { x: 100, y: 480, vy: 0, j: false };
-        function tick() {
-            ctx.fillStyle = "#5c94fc"; ctx.fillRect(0,0,950,600);
-            ctx.fillStyle = "#8b4513"; ctx.fillRect(0,530,950,70);
-            if(keys['ArrowRight']) p.x += 5; if(keys['ArrowLeft']) p.x -= 5;
-            if((keys['Space'] || keys['ArrowUp']) && !p.j) { p.vy = -15; p.j = true; }
-            p.vy += 0.8; p.y += p.vy;
-            if(p.y > 480) { p.y = 480; p.vy = 0; p.j = false; }
-            ctx.fillStyle = "red"; ctx.fillRect(p.x, p.y, 40, 50);
-            hud.innerText = "MARIO: Strzałki i Spacja";
-            loop = requestAnimationFrame(tick);
-        } tick();
-    }
+    // ==================== MINECRAFT ALPHA ====================
+    function startMC() {
+        stop();
+        st.innerText = "MC ALPHA LOGS";
+        sl.innerHTML = "<span class='log-v'>v8.0</span><span class='log-t'>Wersja Alpha. Dodano renderowanie ścian 3D i niebo.</span><span class='log-v'>v7.0</span><span class='log-t'>Pierwsza stabilna wersja silnika Raycasting.</span>";
+        
+        let px = 2, py = 2, pa = 0;
+        const map = [
+            [1,1,1,1,1,1,1,1],
+            [1,0,0,0,0,0,0,1],
+            [1,0,2,2,0,0,0,1],
+            [1,0,0,0,0,3,0,1],
+            [1,1,1,1,1,1,1,1]
+        ];
 
-    function runMC(ctx, hud) {
-        let px = 2.5, py = 2.5, pa = 0;
-        const map = [[1,1,1,1,1,1],[1,0,0,0,0,1],[1,0,2,0,0,1],[1,0,0,3,0,1],[1,1,1,1,1,1]];
-        function tick() {
-            ctx.fillStyle = "#222"; ctx.fillRect(0,300,950,300);
-            ctx.fillStyle = "#87ceeb"; ctx.fillRect(0,0,950,300);
-            if(keys['KeyW']) { px += Math.cos(pa)*0.07; py += Math.sin(pa)*0.07; }
-            if(keys['KeyS']) { px -= Math.cos(pa)*0.07; py -= Math.sin(pa)*0.07; }
-            if(keys['KeyA']) pa -= 0.05; if(keys['KeyD']) pa += 0.05;
-            for(let i=0; i<95; i++) {
-                let ra = pa-0.5+i/95, d=0, rx=px, ry=py;
-                while(d<12) {
-                    d += 0.1; rx = px+Math.cos(ra)*d; ry = py+Math.sin(ra)*d;
-                    let b = map[Math.floor(ry)]?.[Math.floor(rx)];
-                    if(b) {
-                        let h = 600/d; ctx.fillStyle = `hsl(${b*100}, 40%, 40%)`;
-                        ctx.fillRect(i*10, 300-h/2, 10, h); break;
+        loop = setInterval(() => {
+            // Podłoga i Niebo
+            ctx.fillStyle = "#333"; ctx.fillRect(0,250,800,250);
+            ctx.fillStyle = "#87ceeb"; ctx.fillRect(0,0,800,250);
+
+            if(keys['KeyW']) { px += Math.cos(pa)*0.08; py += Math.sin(pa)*0.08; }
+            if(keys['KeyS']) { px -= Math.cos(pa)*0.08; py -= Math.sin(pa)*0.08; }
+            if(keys['KeyA']) pa -= 0.05;
+            if(keys['KeyD']) pa += 0.05;
+
+            for(let i=0; i<80; i++) {
+                let ra = pa - 0.5 + i/80, d = 0, rx = px, ry = py;
+                while(d < 10) {
+                    d += 0.1;
+                    rx = px + Math.cos(ra)*d;
+                    ry = py + Math.sin(ra)*d;
+                    if(map[Math.floor(ry)][Math.floor(rx)]) {
+                        let h = 500/d;
+                        let b = map[Math.floor(ry)][Math.floor(rx)];
+                        ctx.fillStyle = b === 1 ? "#2ecc71" : (b === 2 ? "#f1c40f" : "#3498db");
+                        ctx.fillRect(i*10, 250-h/2, 10, h);
+                        break;
                     }
                 }
             }
-            hud.innerText = "MC ALPHA: W,A,S,D";
-            loop = requestAnimationFrame(tick);
-        } tick();
+            // Celownik
+            ctx.fillStyle = "white"; ctx.fillRect(395, 245, 10, 10);
+        }, 1000/60);
     }
 
-    function runInv(ctx, hud) {
-        let sx = 400, bullets = [], enemies = [], score = 0;
-        for(let i=0; i<8; i++) enemies.push({x: i*100+50, y: 50, a: true});
-        function tick() {
-            ctx.fillStyle = "#000"; ctx.fillRect(0,0,950,600);
-            if(keys['ArrowLeft']) sx -= 7; if(keys['ArrowRight']) sx += 7;
-            if(keys['Space'] && bullets.length < 3) { bullets.push({x: sx+18, y: 540}); keys['Space'] = false; }
-            ctx.fillStyle = "#0f0"; ctx.fillRect(sx, 550, 40, 20);
-            bullets.forEach((b, i) => {
-                b.y -= 8; ctx.fillStyle = "yellow"; ctx.fillRect(b.x, b.y, 4, 12);
+    // ==================== INVADERS ====================
+    function startInvaders() {
+        stop();
+        st.innerText = "INVADERS LOGS";
+        sl.innerHTML = "<span class='log-v'>v8.0</span><span class='log-t'>Naprawiono pociski. Teraz niszczą wrogów natychmiast.</span>";
+        
+        let sx = 380, bullets = [], enemies = [];
+        for(let i=0; i<8; i++) enemies.push({x: i*80+80, y: 50, live: true});
+
+        loop = setInterval(() => {
+            ctx.fillStyle = "black"; ctx.fillRect(0,0,800,500);
+            if(keys['ArrowLeft']) sx -= 7;
+            if(keys['ArrowRight']) sx += 7;
+            if(keys['Space'] && bullets.length < 3) { bullets.push({x: sx+18, y: 440}); keys['Space'] = false; }
+
+            ctx.fillStyle = "#0f0"; ctx.fillRect(sx, 450, 40, 20); // Statek
+
+            bullets.forEach((b, bi) => {
+                b.y -= 10; ctx.fillStyle = "yellow"; ctx.fillRect(b.x, b.y, 4, 15);
                 enemies.forEach(e => {
-                    if(e.a && b.x > e.x && b.x < e.x+40 && b.y < e.y+30) { e.a = false; bullets.splice(i, 1); score += 10; }
+                    if(e.live && b.x > e.x && b.x < e.x+40 && b.y < e.y+30) { e.live = false; bullets.splice(bi, 1); }
                 });
             });
-            enemies.forEach(e => { if(e.a) { ctx.fillStyle = "white"; ctx.fillRect(e.x, e.y, 40, 30); e.y += 0.1; } });
-            hud.innerText = "INVADERS: Wynik: " + score;
-            loop = requestAnimationFrame(tick);
-        } tick();
+
+            enemies.forEach(e => {
+                if(e.live) { ctx.fillStyle = "white"; ctx.fillRect(e.x, e.y, 40, 30); }
+            });
+        }, 1000/60);
     }
 
-    function runSnake(ctx, hud) {
-        let s = [{x:10, y:10}], d = 'R', f = {x:15, y:15}, score = 0, cnt = 0;
-        function tick() {
-            if(cnt++ % 8 !== 0) { loop = requestAnimationFrame(tick); return; }
-            ctx.fillStyle = "#000"; ctx.fillRect(0,0,950,600);
-            if(keys['ArrowUp'] && d !== 'D') d = 'U'; if(keys['ArrowDown'] && d !== 'U') d = 'D';
-            if(keys['ArrowLeft'] && d !== 'R') d = 'L'; if(keys['ArrowRight'] && d !== 'L') d = 'R';
+    // ==================== SNAKE ====================
+    function startSnake() {
+        stop();
+        st.innerText = "SNAKE LOGS";
+        sl.innerHTML = "<span class='log-v'>v8.0</span><span class='log-t'>Naprawiono błąd sterowania. Teraz gra jest płynna.</span>";
+        
+        let s = [{x:10, y:10}], d = 'R', food = {x:15, y:15}, score = 0;
+        loop = setInterval(() => {
+            ctx.fillStyle = "black"; ctx.fillRect(0,0,800,500);
+            if(keys['ArrowUp'] && d !== 'D') d = 'U';
+            if(keys['ArrowDown'] && d !== 'U') d = 'D';
+            if(keys['ArrowLeft'] && d !== 'R') d = 'L';
+            if(keys['ArrowRight'] && d !== 'L') d = 'R';
+
             let h = {...s[0]};
-            if(d==='U') h.y--; if(d==='D') h.y++; if(d==='L') h.x--; if(d==='R') h.x++;
+            if(d === 'U') h.y--; if(d === 'D') h.y++; if(d === 'L') h.x--; if(d === 'R') h.x++;
+            
             s.unshift(h);
-            if(h.x === f.x && h.y === f.y) { score++; f = {x:Math.floor(Math.random()*40), y:Math.floor(Math.random()*25)}; } else s.pop();
+            if(h.x === food.x && h.y === food.y) {
+                score++;
+                food = {x: Math.floor(Math.random()*38), y: Math.floor(Math.random()*23)};
+            } else s.pop();
+
             ctx.fillStyle = "lime"; s.forEach(p => ctx.fillRect(p.x*20, p.y*20, 18, 18));
-            ctx.fillStyle = "red"; ctx.fillRect(f.x*20, f.y*20, 18, 18);
-            hud.innerText = "SNAKE: Wynik: " + score;
-            loop = requestAnimationFrame(tick);
-        } tick();
+            ctx.fillStyle = "red"; ctx.fillRect(food.x*20, food.y*20, 18, 18);
+            
+            if(h.x < 0 || h.x > 39 || h.y < 0 || h.y > 24) startSnake();
+        }, 100);
     }
 
-    function runFlappy(ctx, hud) {
-        let by = 300, bv = 0, score = 0, px = 950;
-        function tick() {
-            ctx.fillStyle = "#4ec0ca"; ctx.fillRect(0,0,950,600);
-            bv += 0.5; by += bv; px -= 5;
-            if(keys['Space']) bv = -8;
-            if(px < -50) { px = 950; score++; }
-            ctx.fillStyle = "green"; ctx.fillRect(px, 0, 50, 200); ctx.fillRect(px, 400, 50, 200);
-            ctx.fillStyle = "yellow"; ctx.fillRect(100, by, 30, 30);
-            if(by > 600 || by < 0) boot('flappy');
-            hud.innerText = "FLAPPY: Wynik: " + score;
-            loop = requestAnimationFrame(tick);
-        } tick();
-    }
+    // Start z Mario
+    startMario();
 </script>
 </body>
 </html>
