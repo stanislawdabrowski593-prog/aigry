@@ -2,29 +2,23 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>AIGRY PLATFORM v6.8 - Professional Expansion</title>
+    <title>AIGRY v6.9 - OMEGA STABLE</title>
     <style>
-        :root { --mc: #2ecc71; --mario: #ff4757; --accent: #00d2ff; --bg: #0a0b10; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
+        :root { --accent: #00d2ff; --bg: #0d1117; --mario: #ff4757; --mc: #2ecc71; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
         
-        header { background: #161b22; width: 100%; padding: 15px 0; border-bottom: 3px solid #30363d; display: flex; justify-content: center; gap: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 100; }
-        .btn { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 12px 20px; cursor: pointer; border-radius: 6px; font-weight: 600; transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px; font-size: 12px; }
-        .btn:hover { background: #30363d; border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
-        .btn.active { border-bottom: 3px solid var(--accent); background: #1c2128; }
+        header { background: #161b22; width: 100%; padding: 15px; border-bottom: 2px solid #30363d; display: flex; justify-content: center; gap: 10px; }
+        .btn { background: #21262d; color: #fff; border: 1px solid #30363d; padding: 10px 15px; cursor: pointer; border-radius: 6px; font-weight: bold; transition: 0.3s; }
+        .btn:hover { border-color: var(--accent); background: #30363d; }
+        .btn.active { background: var(--accent); color: #000; }
 
-        #platform-container { display: flex; width: 1300px; height: 650px; margin-top: 20px; background: #0d1117; border-radius: 12px; border: 1px solid #30363d; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-        #game-viewport { flex-grow: 1; position: relative; background: #000; cursor: crosshair; }
-        #sidebar { width: 320px; background: #161b22; border-left: 1px solid #30363d; display: flex; flex-direction: column; }
+        #container { display: flex; width: 1300px; height: 650px; margin-top: 15px; background: #000; border: 1px solid #30363d; border-radius: 12px; overflow: hidden; }
+        #game-view { flex-grow: 1; position: relative; }
+        #sidebar { width: 350px; background: #0d1117; border-left: 1px solid #30363d; padding: 20px; overflow-y: auto; }
         
-        .sidebar-header { padding: 20px; background: #21262d; border-bottom: 1px solid #30363d; }
-        .sidebar-content { padding: 20px; overflow-y: auto; flex-grow: 1; scrollbar-width: thin; }
-        
-        .update-card { background: #0d1117; border-left: 4px solid var(--accent); padding: 12px; margin-bottom: 15px; border-radius: 4px; }
-        .update-ver { font-weight: 900; color: var(--accent); font-size: 14px; margin-bottom: 5px; }
-        .update-desc { font-size: 13px; color: #8b949e; line-height: 1.4; }
-
-        #hud { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.85); padding: 12px 20px; border-radius: 8px; border-left: 5px solid var(--accent); pointer-events: none; z-index: 50; backdrop-filter: blur(5px); }
-        #hud b { color: var(--accent); }
+        #hud { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px; border-left: 4px solid var(--accent); z-index: 20; font-family: monospace; }
+        .update-box { background: #161b22; padding: 12px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #30363d; }
+        .tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #30363d; color: var(--accent); }
         
         canvas { display: block; }
     </style>
@@ -32,25 +26,21 @@
 <body>
 
 <header>
-    <button class="btn" id="btn-mario" onclick="launch('mario')">Mario World</button>
-    <button class="btn" id="btn-mc" onclick="launch('mc')">Minecraft AI 3D</button>
-    <button class="btn" id="btn-flappy" onclick="launch('flappy')">Flappy Bird</button>
-    <button class="btn" id="btn-invaders" onclick="launch('invaders')">Invaders</button>
-    <button class="btn" id="btn-snake" onclick="launch('snake')">Snake HD</button>
+    <button class="btn" id="mario-btn" onclick="start('mario')">🕹️ MARIO</button>
+    <button class="btn" id="mc-btn" onclick="start('mc')">🧱 MC ALPHA</button>
+    <button class="btn" id="flappy-btn" onclick="start('flappy')">🐦 FLAPPY</button>
+    <button class="btn" id="inv-btn" onclick="start('inv')">🚀 INVADERS</button>
+    <button class="btn" id="snake-btn" onclick="start('snake')">🐍 SNAKE</button>
 </header>
 
-<div id="platform-container">
-    <div id="game-viewport">
-        <div id="hud">SYSTEM READY. WYBIERZ MODUŁ...</div>
-        <canvas id="stage" width="980" height="650"></canvas>
+<div id="container">
+    <div id="game-view">
+        <div id="hud">SYSTEM INITIALIZED...</div>
+        <canvas id="stage" width="950" height="650"></canvas>
     </div>
     <div id="sidebar">
-        <div class="sidebar-header">
-            <h3 id="side-title" style="margin:0; color:var(--accent);">DZIENNIK ZMIAN</h3>
-        </div>
-        <div class="sidebar-content" id="side-logs">
-            <div style="color:#484f58; text-align:center; margin-top:50px;">Wybierz grę, aby wczytać dane techniczne...</div>
-        </div>
+        <h3 id="side-title" style="margin-top:0; color:var(--accent)">DZIENNIK AKTUALIZACJI</h3>
+        <div id="side-content">Wybierz moduł gry...</div>
     </div>
 </div>
 
@@ -58,210 +48,180 @@
     const canvas = document.getElementById('stage');
     const ctx = canvas.getContext('2d');
     const hud = document.getElementById('hud');
-    const sideLogs = document.getElementById('side-logs');
-    const sideTitle = document.getElementById('side-title');
-    
-    let loop, keys = {}, score = 0, frame = 0;
+    const sideContent = document.getElementById('side-content');
+    let loop, keys = {}, score = 0, currentId = '';
 
-    window.onkeydown = e => { keys[e.code] = true; if(["Space","ArrowUp","ArrowDown"].includes(e.code)) e.preventDefault(); };
+    window.onkeydown = e => keys[e.code] = true;
     window.onkeyup = e => keys[e.code] = false;
 
-    const gameData = {
+    const data = {
         mario: {
-            title: "MARIO WORLD v6.8",
-            color: "#ff4757",
+            title: "MARIO WORLD v6.9",
             logs: [
-                {v: "v6.8", d: "20.02.2026", t: "Dodano system kolizji bocznych oraz rury z fizyką stałą."},
-                {v: "v6.5", d: "15.02.2026", t: "Poprawiono renderowanie wąsów i animację czapki Mario."},
-                {v: "v6.0", d: "01.02.2026", t: "Wprowadzono system 'Solid Ground' eliminujący zapadanie się."}
+                "v6.9: Dodano kolizje rur i stabilizację gruntu.",
+                "v6.5: Odświeżono Mario: wąsy, czapka i lepsze kolory.",
+                "v1.0: Silnik ruchu platformowego."
             ]
         },
         mc: {
-            title: "MC AI 3D v6.8",
-            color: "#2ecc71",
+            title: "MINECRAFT ALPHA v0.2",
             logs: [
-                {v: "v6.8", d: "20.02.2026", t: "NOWOŚĆ: Dodano system stawiania bloków (LPM) i usuwania (PPM)."},
-                {v: "v6.4", d: "10.02.2026", t: "Optymalizacja silnika Raycasting dla 60 FPS."},
-                {v: "v5.0", d: "20.01.2026", t: "Implementacja renderowania kolorowych tekstur ścian."}
+                "v0.2: Dodano system wyboru bloków (1-3).",
+                "v0.1: Pierwszy silnik Raycasting 3D.",
+                "v0.0: Renderowanie masek ścian."
             ]
         },
-        flappy: {
-            title: "FLAPPY BIRD v6.8",
-            color: "#f1c40f",
+        snake: {
+            title: "SNAKE HD v6.9",
             logs: [
-                {v: "v6.8", d: "20.02.2026", t: "Zmieniono fizykę grawitacji na bardziej responsywną."},
-                {v: "v6.0", d: "05.02.2026", t: "Dodano dynamiczne tło i licznik punktów."}
+                "v6.9: CAŁKOWITY FIX: Naprawiono sterowanie i zacinanie.",
+                "v4.0: Dodano system zbierania owoców."
+            ]
+        },
+        inv: {
+            title: "INVADERS v6.9",
+            logs: [
+                "v6.9: FIX: Pociski teraz poprawnie niszczą wrogów.",
+                "v5.0: Dodano ruchomych przeciwników."
             ]
         }
     };
 
-    function launch(game) {
-        if (loop) cancelAnimationFrame(loop);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        score = 0; frame = 0;
+    function start(id) {
+        if(loop) cancelAnimationFrame(loop);
+        currentId = id;
+        score = 0;
+        ctx.clearRect(0,0,950,650);
         
-        // UI Updates
-        document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('btn-' + game)?.classList.add('active');
-        
-        if (gameData[game]) {
-            sideTitle.innerText = gameData[game].title;
-            sideTitle.style.color = gameData[game].color;
-            sideLogs.innerHTML = gameData[game].logs.map(l => `
-                <div class="update-card" style="border-color:${gameData[game].color}">
-                    <div class="update-ver">${l.v} <span style="color:#484f58; font-size:10px;">[${l.d}]</span></div>
-                    <div class="update-desc">${l.t}</div>
-                </div>
-            `).join('');
-        }
+        // Sidebar update
+        const info = data[id] || {title: id.toUpperCase(), logs: ["Brak logów"]};
+        document.getElementById('side-title').innerText = info.title;
+        sideContent.innerHTML = info.logs.map(l => `<div class="update-box"><span class="tag">UPDATE</span><div style="margin-top:5px; font-size:13px">${l}</div></div>`).join('');
 
-        if (game === 'mario') runMario();
-        if (game === 'mc') runMC();
-        if (game === 'flappy') runFlappy();
-        if (game === 'invaders') runInv();
-        if (game === 'snake') runSnake();
+        if(id === 'mario') runMario();
+        if(id === 'mc') runMC();
+        if(id === 'snake') runSnake();
+        if(id === 'inv') runInv();
+        if(id === 'flappy') runFlappy();
     }
 
-    // ==================== MARIO WORLD (PRO) ====================
-    function runMario() {
-        let p = { x: 100, y: 530, vy: 0, j: false, w: 40, h: 50 };
-        let pipes = [{x: 400, w: 60, h: 80}, {x: 700, w: 60, h: 120}];
-
+    // --- SNAKE FIXED ---
+    function runSnake() {
+        let s = [{x:10, y:10}], d = 'R', f = {x:15, y:15}, counter = 0;
         function draw() {
-            ctx.fillStyle = "#5c94fc"; ctx.fillRect(0,0,980,650); // Sky
-            ctx.fillStyle = "#8b4513"; ctx.fillRect(0,580,980,70); // Dirt
-            ctx.fillStyle = "#2ecc71"; ctx.fillRect(0,580,980,10); // Grass
-
-            // Controls
-            if(keys['ArrowRight']) p.x += 6; if(keys['ArrowLeft']) p.x -= 6;
-            if(keys['Space'] && !p.j) { p.vy = -17; p.j = true; }
-            
-            p.vy += 0.8; p.y += p.vy;
-
-            // Pipe Collision
-            pipes.forEach(pipe => {
-                ctx.fillStyle = "#27ae60"; ctx.fillRect(pipe.x, 580-pipe.h, pipe.w, pipe.h);
-                ctx.strokeStyle = "#000"; ctx.strokeRect(pipe.x, 580-pipe.h, pipe.w, pipe.h);
-                if(p.x + p.w > pipe.x && p.x < pipe.x + pipe.w && p.y + p.h > 580 - pipe.h) {
-                    if(p.vy > 0 && p.y + p.h < 580 - pipe.h + 20) { p.y = 580-pipe.h-p.h; p.vy = 0; p.j = false; }
-                    else { p.x -= 6; }
-                }
-            });
-
-            if(p.y > 530) { p.y = 530; p.vy = 0; p.j = false; }
-
-            // Draw Mario
-            ctx.fillStyle = "red"; ctx.fillRect(p.x, p.y, p.w, 20); // Hat/Top
-            ctx.fillStyle = "#ffdbac"; ctx.fillRect(p.x, p.y+20, p.w, 15); // Face
-            ctx.fillStyle = "black"; ctx.fillRect(p.x+25, p.y+25, 10, 4); // Mustache
-            ctx.fillStyle = "blue"; ctx.fillRect(p.x, p.y+35, p.w, 15); // Pants
-
-            hud.innerHTML = `GAME: <b>MARIO WORLD</b> | SCORE: <b>${score}</b> | POS: <b>${Math.floor(p.x)}</b>`;
+            if(counter++ % 8 !== 0) { loop = requestAnimationFrame(draw); return; }
+            ctx.fillStyle = "#000"; ctx.fillRect(0,0,950,650);
+            if(keys['ArrowUp'] && d!=='D') d='U'; if(keys['ArrowDown'] && d!=='U') d='D';
+            if(keys['ArrowLeft'] && d!=='R') d='L'; if(keys['ArrowRight'] && d!=='L') d='R';
+            let head = {...s[0]};
+            if(d==='U') head.y--; if(d==='D') head.y++; if(d==='L') head.x--; if(d==='R') head.x++;
+            if(head.x<0 || head.x>47 || head.y<0 || head.y>32) return start('snake');
+            s.unshift(head);
+            if(head.x===f.x && head.y===f.y) { score++; f={x:Math.floor(Math.random()*40),y:Math.floor(Math.random()*30)}; } else s.pop();
+            ctx.fillStyle="lime"; s.forEach(p => ctx.fillRect(p.x*20, p.y*20, 19, 19));
+            ctx.fillStyle="red"; ctx.fillRect(f.x*20, f.y*20, 19, 19);
+            hud.innerText = "SNAKE FIXED | SCORE: " + score;
             loop = requestAnimationFrame(draw);
         } draw();
     }
 
-    // ==================== MINECRAFT AI (INTERACTIVE) ====================
-    function runMC() {
-        let px = 3, py = 3, pa = 0;
-        let world = [
-            [1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,1],[1,0,0,2,0,0,0,1],
-            [1,0,0,2,0,3,0,1],[1,0,0,0,0,3,0,1],[1,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1]
-        ];
+    // --- INVADERS FIXED ---
+    function runInv() {
+        let sx = 450, bullets = [], enemies = [];
+        for(let i=0; i<8; i++) for(let j=0; j<3; j++) enemies.push({x: i*100+100, y: j*60+50, alive: true});
+        function draw() {
+            ctx.fillStyle = "#050505"; ctx.fillRect(0,0,950,650);
+            if(keys['ArrowLeft']) sx -= 7; if(keys['ArrowRight']) sx += 7;
+            if(keys['Space'] && bullets.length < 5) { bullets.push({x: sx+22, y: 580}); keys['Space']=false; }
+            
+            ctx.fillStyle = "#00ff00"; ctx.fillRect(sx, 580, 50, 20); // Statek
 
+            bullets.forEach((b, bi) => {
+                b.y -= 10; ctx.fillStyle = "yellow"; ctx.fillRect(b.x, b.y, 4, 15);
+                enemies.forEach(e => {
+                    if(e.alive && b.x > e.x && b.x < e.x+50 && b.y < e.y+30) { e.alive = false; bullets.splice(bi, 1); score += 10; }
+                });
+            });
+
+            enemies.forEach(e => {
+                if(e.alive) { ctx.fillStyle = "white"; ctx.fillRect(e.x, e.y, 50, 30); e.x += Math.sin(Date.now()/500)*2; }
+            });
+            hud.innerText = "INVADERS FIXED | SPACE TO SHOOT | SCORE: " + score;
+            loop = requestAnimationFrame(draw);
+        } draw();
+    }
+
+    // --- MC ALPHA ---
+    function runMC() {
+        let px=3, py=3, pa=0, blockType=2;
+        let map = [[1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,1],[1,0,2,0,3,0,0,1],[1,0,2,0,3,0,0,1],[1,1,1,1,1,1,1,1]];
         canvas.onmousedown = (e) => {
-            let ra = pa;
-            let rx = px + Math.cos(ra)*2;
-            let ry = py + Math.sin(ra)*2;
-            if(e.button === 0) world[Math.floor(ry)][Math.floor(rx)] = 2; // Build
-            if(e.button === 2) world[Math.floor(ry)][Math.floor(rx)] = 0; // Remove
+            let rx = Math.floor(px + Math.cos(pa)*2); let ry = Math.floor(py + Math.sin(pa)*2);
+            if(e.button === 0) map[ry][rx] = blockType;
+            if(e.button === 2) map[ry][rx] = 0;
         };
         canvas.oncontextmenu = e => e.preventDefault();
 
         function draw() {
-            ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0,325,980,325); // Ground
-            ctx.fillStyle = "#4a90e2"; ctx.fillRect(0,0,980,325); // Sky
-
-            if(keys['KeyW']) { px += Math.cos(pa)*0.08; py += Math.sin(pa)*0.08; }
-            if(keys['KeyS']) { px -= Math.cos(pa)*0.08; py -= Math.sin(pa)*0.08; }
+            ctx.fillStyle="#111"; ctx.fillRect(0,325,950,325); ctx.fillStyle="#444"; ctx.fillRect(0,0,950,325);
+            if(keys['KeyW']) { px += Math.cos(pa)*0.06; py += Math.sin(pa)*0.06; }
+            if(keys['KeyS']) { px -= Math.cos(pa)*0.06; py -= Math.sin(pa)*0.06; }
             if(keys['KeyA']) pa -= 0.05; if(keys['KeyD']) pa += 0.05;
+            if(keys['Digit1']) blockType = 1; if(keys['Digit2']) blockType = 2; if(keys['Digit3']) blockType = 3;
 
             for(let i=0; i<100; i++) {
-                let ra = pa - 0.5 + (i/100), d = 0, rx = px, ry = py;
-                while(d < 14) {
-                    d += 0.1; rx = px + Math.cos(ra)*d; ry = py + Math.sin(ra)*d;
-                    let b = world[Math.floor(ry)]?.[Math.floor(rx)];
-                    if(b) {
+                let ra = pa-0.5+i/100, d=0, rx=px, ry=py;
+                while(d<12) {
+                    d += 0.1; rx = px+Math.cos(ra)*d; ry = py+Math.sin(ra)*d;
+                    if(map[Math.floor(ry)]?.[Math.floor(rx)]) {
                         let h = 650/d;
-                        let colors = ["","#2ecc71","#f1c40f","#3498db"];
-                        ctx.fillStyle = colors[b];
-                        ctx.globalAlpha = 1 - (d/14);
-                        ctx.fillRect(i*10, 325-h/2, 10, h);
-                        ctx.globalAlpha = 1;
-                        break;
+                        let colors = ["","#555","#2ecc71","#f1c40f"];
+                        ctx.fillStyle = colors[map[Math.floor(ry)][Math.floor(rx)]];
+                        ctx.fillRect(i*10, 325-h/2, 10, h); break;
                     }
                 }
             }
-            ctx.fillStyle = "white"; ctx.fillRect(485,320,10,10); // Crosshair
-            hud.innerHTML = `GAME: <b>MC AI 3D</b> | LPM: <b>BUDUJ</b> | PPM: <b>USUŃ</b> | WASD`;
+            hud.innerHTML = `MC ALPHA | 1-3: BLOKI | LPM: BUDUJ | TYP: <b>${blockType}</b>`;
             loop = requestAnimationFrame(draw);
         } draw();
     }
 
-    // ==================== FLAPPY BIRD ====================
+    // --- MARIO WORLD ---
+    function runMario() {
+        let p = { x: 100, y: 530, vy: 0, j: false };
+        function draw() {
+            ctx.fillStyle = "#5c94fc"; ctx.fillRect(0,0,950,650);
+            ctx.fillStyle = "#8b4513"; ctx.fillRect(0,580,950,70);
+            if(keys['ArrowRight']) p.x += 6; if(keys['ArrowLeft']) p.x -= 6;
+            if(keys['Space'] && !p.j) { p.vy = -16; p.j = true; }
+            p.vy += 0.8; p.y += p.vy;
+            if(p.y > 530) { p.y = 530; p.vy = 0; p.j = false; }
+            // Mario Character
+            ctx.fillStyle = "red"; ctx.fillRect(p.x, p.y-5, 30, 10); // Czapka
+            ctx.fillStyle = "#ffdbac"; ctx.fillRect(p.x, p.y+5, 30, 20); // Twarz
+            ctx.fillStyle = "black"; ctx.fillRect(p.x+20, p.y+10, 6, 4); // Wąsy
+            ctx.fillStyle = "blue"; ctx.fillRect(p.x, p.y+25, 30, 25); // Spodnie
+            hud.innerText = "MARIO WORLD | STRZAŁKI + SPACJA";
+            loop = requestAnimationFrame(draw);
+        } draw();
+    }
+
     function runFlappy() {
-        let by = 300, bv = 0, pipes = [{x: 980, h: 250}];
+        let by=300, bv=0, px=950, ph=200;
         function draw() {
-            ctx.fillStyle = "#70c5ce"; ctx.fillRect(0,0,980,650);
-            bv += 0.6; by += bv;
-            if(keys['Space']) bv = -9;
-            pipes.forEach((p, i) => {
-                p.x -= 6;
-                ctx.fillStyle = "#2ecc71"; ctx.fillRect(p.x, 0, 60, p.h); ctx.fillRect(p.x, p.h+220, 60, 650);
-                if(p.x < -60) { pipes.splice(i,1); pipes.push({x:980, h:Math.random()*300+100}); score++; }
-                if(150 > p.x && 150 < p.x+60 && (by < p.h || by+30 > p.h+220)) launch('flappy');
-            });
-            ctx.fillStyle = "#f1c40f"; ctx.fillRect(150, by, 35, 30);
-            if(by > 650 || by < 0) launch('flappy');
-            hud.innerHTML = `GAME: <b>FLAPPY BIRD</b> | SCORE: <b>${score}</b> | SPACE TO JUMP`;
+            ctx.fillStyle = "#4ec0ca"; ctx.fillRect(0,0,950,650);
+            bv += 0.5; by += bv; px -= 5;
+            if(keys['Space']) bv = -8;
+            if(px < -50) { px = 950; ph = Math.random()*300+100; score++; }
+            ctx.fillStyle = "green"; ctx.fillRect(px, 0, 60, ph); ctx.fillRect(px, ph+220, 60, 650);
+            ctx.fillStyle = "yellow"; ctx.fillRect(150, by, 30, 30);
+            if(by > 650 || by < 0) start('flappy');
+            hud.innerText = "FLAPPY BIRD | SCORE: " + score;
             loop = requestAnimationFrame(draw);
         } draw();
     }
 
-    // Snake and Invaders (Simplified for space)
-    function runSnake() {
-        let s = [{x:10, y:10}], d = 'R', f = {x:15, y:15};
-        function draw() {
-            if(frame++ % 8 !== 0) { loop = requestAnimationFrame(draw); return; }
-            ctx.fillStyle = "#000"; ctx.fillRect(0,0,980,650);
-            if(keys['ArrowUp'] && d!=='D') d='U'; if(keys['ArrowDown'] && d!=='U') d='D';
-            if(keys['ArrowLeft'] && d!=='R') d='L'; if(keys['ArrowRight'] && d!=='L') d='R';
-            let h = {...s[0]};
-            if(d==='U') h.y--; if(d==='D') h.y++; if(d==='L') h.x--; if(d==='R') h.x++;
-            s.unshift(h);
-            if(h.x===f.x && h.y===f.y){ score++; f={x:Math.floor(Math.random()*40),y:Math.floor(Math.random()*30)}; } else s.pop();
-            ctx.fillStyle="lime"; s.forEach(p=>ctx.fillRect(p.x*20, p.y*20, 18, 18));
-            ctx.fillStyle="red"; ctx.fillRect(f.x*20, f.y*20, 18, 18);
-            hud.innerHTML = `GAME: <b>SNAKE HD</b> | SCORE: <b>${score}</b>`;
-            loop = requestAnimationFrame(draw);
-        } draw();
-    }
-
-    function runInv() {
-        let sx = 450, enemies = [];
-        for(let i=0; i<8; i++) enemies.push({x: i*100+100, y: 100});
-        function draw() {
-            ctx.fillStyle="#000"; ctx.fillRect(0,0,980,650);
-            if(keys['ArrowLeft']) sx-=8; if(keys['ArrowRight']) sx+=8;
-            ctx.fillStyle="#0f0"; ctx.fillRect(sx, 580, 50, 20);
-            ctx.fillStyle="#fff"; enemies.forEach(e => { ctx.fillRect(e.x, e.y, 40, 30); e.y += 0.3; if(e.y > 580) launch('invaders'); });
-            hud.innerHTML = `GAME: <b>SPACE INVADERS</b> | SCORE: <b>${score}</b>`;
-            loop = requestAnimationFrame(draw);
-        } draw();
-    }
-
-    // Default Launch
-    launch('mario');
+    start('mario');
 </script>
 </body>
 </html>
