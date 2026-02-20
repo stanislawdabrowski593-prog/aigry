@@ -2,181 +2,144 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>AIGRY v6.3 - REBORN PLATFORM</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <title>AIGRY v6.4 - Engine Overhaul</title>
     <style>
-        :root { --accent: #00d2ff; --bg: #0a0a0a; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
-        
-        header { background: #111; width: 100%; padding: 15px; border-bottom: 3px solid #333; display: flex; justify-content: space-around; align-items: center; }
-        .nav { display: flex; gap: 8px; flex-wrap: wrap; }
-        .btn { background: #222; color: #fff; border: 1px solid #444; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 12px; }
-        .btn:hover { background: var(--accent); color: #000; border-color: #fff; }
-
-        #main-layout { display: flex; width: 1280px; height: 620px; background: #000; border: 3px solid #222; margin-top: 10px; border-radius: 8px; overflow: hidden; }
-        #game-view { flex-grow: 1; position: relative; background: #000; }
-        #sidebar { width: 260px; background: #0d0d0d; border-left: 2px solid #222; padding: 15px; font-size: 13px; color: #888; }
-
-        #hud { position: absolute; top: 15px; left: 15px; z-index: 50; font-family: monospace; text-shadow: 2px 2px #000; pointer-events: none; }
+        body { font-family: 'Segoe UI', sans-serif; background: #050505; color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
+        header { background: #111; width: 100%; padding: 15px; border-bottom: 2px solid #333; display: flex; justify-content: center; gap: 10px; }
+        .btn { background: #222; color: #fff; border: 1px solid #444; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+        .btn:hover { background: #333; border-color: #00d2ff; }
+        #game-box { width: 1000px; height: 600px; background: #000; border: 5px solid #1a1a1a; margin-top: 20px; position: relative; }
+        #hud { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); padding: 5px; font-family: monospace; z-index: 10; }
+        canvas { display: block; }
     </style>
 </head>
 <body>
 
 <header>
-    <div style="font-weight: 900; font-size: 20px; color: var(--accent);">AIGRY PLATFORM</div>
-    <div class="nav">
-        <button class="btn" onclick="play('mario')">MARIO</button>
-        <button class="btn" onclick="play('mc')">MINECRAFT AI</button>
-        <button class="btn" onclick="play('flappy')">FLAPPY BIRD</button>
-        <button class="btn" onclick="play('invaders')">INVADERS</button>
-        <button class="btn" onclick="play('snake')">SNAKE</button>
-    </div>
+    <button class="btn" onclick="runMario()">MARIO FIX</button>
+    <button class="btn" onclick="runMC()">MINECRAFT FIX (Pseudo-3D)</button>
+    <button class="btn" onclick="runFlappy()">FLAPPY BIRD</button>
+    <button class="btn" onclick="runSnake()">SNAKE</button>
 </header>
 
-<div id="main-layout">
-    <div id="game-view">
-        <div id="hud">Wybierz grę, aby rozpocząć...</div>
-        <div id="canvas-container" style="width:100%; height:100%;"></div>
-    </div>
-    <div id="sidebar">
-        <h3 style="color:var(--accent); margin-top:0;">AKTUALIZACJA 6.3</h3>
-        <div id="side-info">
-            • <b>Fix:</b> Mario nie wpada pod ziemię.<br>
-            • <b>Fix:</b> Stabilny silnik MC AI.<br>
-            • <b>New:</b> Flappy Bird.<br>
-            • <b>New:</b> Space Invaders.
-        </div>
-    </div>
+<div id="game-box">
+    <div id="hud">Wybierz grę powyżej. Jeśli nie działa - odśwież stronę.</div>
+    <canvas id="screen" width="1000" height="600"></canvas>
 </div>
 
 <script>
-    let loop, keys = {}, score = 0;
-    const container = document.getElementById('canvas-container');
+    const canvas = document.getElementById('screen');
+    const ctx = canvas.getContext('2d');
     const hud = document.getElementById('hud');
+    let loop, keys = {};
 
     window.onkeydown = e => keys[e.code] = true;
     window.onkeyup = e => keys[e.code] = false;
 
-    function play(game) {
-        if(loop) cancelAnimationFrame(loop);
-        container.innerHTML = "";
-        score = 0;
-        
-        if(game === 'mario') runMario();
-        if(game === 'mc') runMC();
-        if(game === 'flappy') runFlappy();
-        if(game === 'invaders') runInvaders();
-        if(game === 'snake') runSnake();
-    }
+    function stopLoop() { if(loop) cancelAnimationFrame(loop); ctx.clearRect(0,0,1000,600); }
 
-    // ==================== MARIO REBORN ====================
+    // ==================== MARIO FIX (SOLID CANVAS) ====================
     function runMario() {
-        const cvs = document.createElement('canvas'); cvs.width = 1000; cvs.height = 620;
-        container.appendChild(cvs); const ctx = cvs.getContext('2d');
-        let p = { x: 100, y: 500, vy: 0, j: false };
-        function draw() {
-            ctx.fillStyle = "#5c94fc"; ctx.fillRect(0,0,1000,620);
-            ctx.fillStyle = "#8b4513"; ctx.fillRect(0,550,1000,70); // Ziemia
-            if(keys['ArrowRight']) p.x += 5; if(keys['ArrowLeft']) p.x -= 5;
-            if(keys['Space'] && !p.j) { p.vy = -15; p.j = true; }
+        stopLoop();
+        let p = { x: 50, y: 500, vy: 0, jump: false };
+        function update() {
+            ctx.fillStyle = "#5c94fc"; ctx.fillRect(0,0,1000,600); // Niebo
+            ctx.fillStyle = "#8b4513"; ctx.fillRect(0,550,1000,50); // Ziemia
+            
+            if(keys['ArrowRight']) p.x += 5;
+            if(keys['ArrowLeft']) p.x -= 5;
+            if(keys['Space'] && !p.jump) { p.vy = -15; p.jump = true; }
+            
             p.vy += 0.8; p.y += p.vy;
-            if(p.y > 500) { p.y = 500; p.vy = 0; p.j = false; }
-            ctx.fillStyle = "red"; ctx.fillRect(p.x, p.y, 40, 50); // Mario
-            hud.innerText = "MARIO REBORN | Strzałki + Spacja";
-            loop = requestAnimationFrame(draw);
-        } draw();
+            if(p.y > 500) { p.y = 500; p.vy = 0; p.jump = false; }
+
+            // Mario Character
+            ctx.fillStyle = "red"; ctx.fillRect(p.x, p.y, 40, 50);
+            ctx.fillStyle = "#ffdbac"; ctx.fillRect(p.x+10, p.y+5, 30, 20);
+            
+            hud.innerText = "MARIO WORLD: Strzałki = Ruch, Spacja = Skok";
+            loop = requestAnimationFrame(update);
+        } update();
     }
 
-    // ==================== MINECRAFT AI STABLE ====================
+    // ==================== MINECRAFT pseudo-3D (Ultra Stable) ====================
     function runMC() {
-        const scene = new THREE.Scene(); scene.background = new THREE.Color(0x87CEEB);
-        const camera = new THREE.PerspectiveCamera(75, 1000/620, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
-        renderer.setSize(1000, 620); container.appendChild(renderer.domElement);
-        const geo = new THREE.BoxGeometry(1,1,1);
-        const mat = new THREE.MeshLambertMaterial({color: 0x2ecc71});
-        for(let x=-5; x<5; x++) for(let z=-5; z<5; z++) {
-            const b = new THREE.Mesh(geo, mat); b.position.set(x, 0, z); scene.add(b);
-        }
-        const light = new THREE.PointLight(0xffffff, 1, 100); light.position.set(10,10,10); scene.add(light);
-        scene.add(new THREE.AmbientLight(0x404040));
-        camera.position.set(0, 5, 10); camera.lookAt(0,0,0);
-        function draw() {
-            if(keys['KeyW']) camera.translateZ(-0.1); if(keys['KeyS']) camera.translateZ(0.1);
-            if(keys['KeyA']) camera.translateX(-0.1); if(keys['KeyD']) camera.translateX(0.1);
-            renderer.render(scene, camera);
-            hud.innerText = "MC AI ALPHA | WASD: Ruch | Spacja: Góra | Shift: Dół";
-            loop = requestAnimationFrame(draw);
-        } draw();
-    }
+        stopLoop();
+        let px = 5, py = 5, pa = 0;
+        const map = [
+            [1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,0,0,0,0,0,1],
+            [1,0,2,2,0,0,0,0,0,1],
+            [1,0,2,2,0,0,3,3,0,1],
+            [1,0,0,0,0,0,3,3,0,1],
+            [1,1,1,1,1,1,1,1,1,1]
+        ];
+        
+        function update() {
+            ctx.fillStyle = "#333"; ctx.fillRect(0,0,1000,600); // Podłoga/Sufit
+            ctx.fillStyle = "#87CEEB"; ctx.fillRect(0,0,1000,300);
+            
+            if(keys['KeyW']) { px += Math.cos(pa)*0.05; py += Math.sin(pa)*0.05; }
+            if(keys['KeyS']) { px -= Math.cos(pa)*0.05; py -= Math.sin(pa)*0.05; }
+            if(keys['KeyA']) pa -= 0.05;
+            if(keys['KeyD']) pa += 0.05;
 
-    // ==================== FLAPPY BIRD (NOWA) ====================
-    function runFlappy() {
-        const cvs = document.createElement('canvas'); cvs.width = 1000; cvs.height = 620;
-        container.appendChild(cvs); const ctx = cvs.getContext('2d');
-        let bird = { y: 300, v: 0 };
-        let pipes = [{ x: 1000, h: 200 }];
-        function draw() {
-            ctx.fillStyle = "#70c5ce"; ctx.fillRect(0,0,1000,620);
-            bird.v += 0.5; bird.y += bird.v;
-            if(keys['Space']) bird.v = -8;
-            pipes.forEach(p => {
-                p.x -= 5;
-                ctx.fillStyle = "green"; 
-                ctx.fillRect(p.x, 0, 50, p.h); 
-                ctx.fillRect(p.x, p.h + 200, 50, 620);
-                if(p.x < -50) { p.x = 1000; p.h = Math.random()*300 + 50; score++; }
-                if(bird.y < 0 || bird.y > 620) play('flappy');
-            });
-            ctx.fillStyle = "yellow"; ctx.fillRect(100, bird.y, 30, 30);
-            hud.innerText = "FLAPPY BIRD | Spacja: Skok | Wynik: " + score;
-            loop = requestAnimationFrame(draw);
-        } draw();
-    }
-
-    // ==================== SPACE INVADERS (NOWA) ====================
-    function runInvaders() {
-        const cvs = document.createElement('canvas'); cvs.width = 1000; cvs.height = 620;
-        container.appendChild(cvs); const ctx = cvs.getContext('2d');
-        let shipX = 500, bullets = [], enemies = [];
-        for(let i=0; i<10; i++) enemies.push({x: i*80 + 100, y: 50});
-        function draw() {
-            ctx.fillStyle = "black"; ctx.fillRect(0,0,1000,620);
-            if(keys['ArrowLeft']) shipX -= 7; if(keys['ArrowRight']) shipX += 7;
-            if(keys['Space'] && bullets.length < 5) bullets.push({x: shipX + 15, y: 550});
-            ctx.fillStyle = "lime"; ctx.fillRect(shipX, 550, 40, 20);
-            bullets.forEach((b, i) => {
-                b.y -= 10; ctx.fillRect(b.x, b.y, 5, 15);
-                enemies.forEach((e, ei) => {
-                    if(b.x > e.x && b.x < e.x + 40 && b.y < e.y + 30) {
-                        enemies.splice(ei, 1); bullets.splice(i, 1); score += 10;
+            // Raycasting Engine
+            for(let i=0; i<100; i++) {
+                let ra = pa - 0.5 + i/100;
+                let rx = px, ry = py;
+                let d = 0;
+                while(d < 15) {
+                    d += 0.1;
+                    rx = px + Math.cos(ra) * d;
+                    ry = py + Math.sin(ra) * d;
+                    if(map[Math.floor(ry)] && map[Math.floor(ry)][Math.floor(rx)]) {
+                        let h = 600 / d;
+                        let color = map[Math.floor(ry)][Math.floor(rx)];
+                        ctx.fillStyle = color === 1 ? "#2ecc71" : (color === 2 ? "#ffd700" : "#3498db");
+                        ctx.fillRect(i*10, 300-h/2, 10, h);
+                        break;
                     }
-                });
-            });
-            ctx.fillStyle = "white";
-            enemies.forEach(e => ctx.fillRect(e.x, e.y, 40, 30));
-            if(enemies.length === 0) { alert("WYGRAŁEŚ!"); play('invaders'); }
-            hud.innerText = "SPACE INVADERS | Strzałki: Ruch | Spacja: Strzał | Score: " + score;
-            loop = requestAnimationFrame(draw);
-        } draw();
+                }
+            }
+            hud.innerText = "MC AI PSEUDO-3D: WASD = Poruszanie, myszka nie jest potrzebna!";
+            loop = requestAnimationFrame(update);
+        } update();
     }
 
-    // ==================== SNAKE ====================
+    // ==================== SNAKE (Classic) ====================
     function runSnake() {
-        const cvs = document.createElement('canvas'); cvs.width = 1000; cvs.height = 620;
-        container.appendChild(cvs); const ctx = cvs.getContext('2d');
-        let s = [{x:200, y:200}], d = 'R';
-        function draw() {
-            ctx.fillStyle = "#111"; ctx.fillRect(0,0,1000,620);
+        stopLoop();
+        let s = [{x:10, y:10}], d = 'R', f = {x:15, y:15};
+        function update(t) {
+            ctx.fillStyle = "#000"; ctx.fillRect(0,0,1000,600);
+            if(keys['ArrowUp']) d='U'; if(keys['ArrowDown']) d='D';
+            if(keys['ArrowLeft']) d='L'; if(keys['ArrowRight']) d='R';
+            
             let h = {...s[0]};
-            if(keys['ArrowUp']) d = 'U'; if(keys['ArrowDown']) d = 'D';
-            if(keys['ArrowLeft']) d = 'L'; if(keys['ArrowRight']) d = 'R';
-            if(d==='U') h.y-=5; if(d==='D') h.y+=5; if(d==='L') h.x-=5; if(d==='R') h.x+=5;
+            if(d==='U') h.y--; if(d==='D') h.y++; if(d==='L') h.x--; if(d==='R') h.x++;
             s.unshift(h); s.pop();
-            ctx.fillStyle = "lime"; s.forEach(p => ctx.fillRect(p.x, p.y, 15, 15));
-            hud.innerText = "SNAKE | Strzałki: Sterowanie";
-            loop = requestAnimationFrame(draw);
-        } draw();
+
+            ctx.fillStyle = "red"; ctx.fillRect(f.x*20, f.y*20, 18, 18);
+            ctx.fillStyle = "lime"; s.forEach(p => ctx.fillRect(p.x*20, p.y*20, 18, 18));
+            
+            hud.innerText = "SNAKE: Strzałki = Sterowanie";
+            setTimeout(() => { loop = requestAnimationFrame(update); }, 100);
+        } update();
+    }
+
+    function runFlappy() {
+        stopLoop();
+        let by = 300, bv = 0;
+        function update() {
+            ctx.fillStyle = "#70c5ce"; ctx.fillRect(0,0,1000,600);
+            bv += 0.5; by += bv;
+            if(keys['Space']) bv = -8;
+            ctx.fillStyle = "yellow"; ctx.fillRect(100, by, 30, 30);
+            if(by > 600 || by < 0) runFlappy();
+            hud.innerText = "FLAPPY BIRD: Spacja = Skok";
+            loop = requestAnimationFrame(update);
+        } update();
     }
 </script>
 </body>
