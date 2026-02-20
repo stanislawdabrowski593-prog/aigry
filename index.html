@@ -2,210 +2,209 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>AIGRY v5.0</title>
+    <title>AIGRY v5.1 - ULTIMATE FIX</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        :root { --accent: #00d2ff; --bg: #0a0a0a; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; }
-        header { background: #111; width: 100%; padding: 15px; border-bottom: 3px solid var(--accent); display: flex; justify-content: space-around; align-items: center; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
-        .main-menu { display: flex; gap: 12px; margin: 20px; flex-wrap: wrap; justify-content: center; }
-        .btn { background: #1a1a1a; color: #fff; border: 2px solid #333; padding: 12px 25px; cursor: pointer; border-radius: 8px; font-weight: bold; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
-        .btn:hover { border-color: var(--accent); background: #222; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,210,255,0.3); }
-        #game-viewport { position: relative; width: 900px; height: 500px; background: #000; border: 4px solid #1a1a1a; border-radius: 15px; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.8); }
-        #game-viewport:fullscreen { width: 100vw; height: 100vh; border-radius: 0; border: none; }
-        #hud { position: absolute; top: 20px; left: 20px; z-index: 10; font-family: 'Courier New', monospace; font-size: 20px; text-shadow: 2px 2px #000; color: var(--accent); pointer-events: none; }
-        #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #fff; display: none; font-size: 24px; z-index: 5; pointer-events: none; opacity: 0.7; }
-        .inventory { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: none; gap: 5px; background: rgba(0,0,0,0.6); padding: 5px; border-radius: 5px; }
-        .slot { width: 35px; height: 35px; border: 2px solid #555; }
-        .slot.active { border-color: gold; box-shadow: 0 0 10px gold; }
+        :root { --accent: #00d2ff; --bg: #050505; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
+        header { background: #111; width: 100%; padding: 10px; border-bottom: 2px solid var(--accent); display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+        .menu { display: flex; gap: 10px; margin: 15px; }
+        .btn { background: #1a1a1a; color: #fff; border: 1px solid #333; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: 0.2s; }
+        .btn:hover { border-color: var(--accent); background: #222; }
+        
+        #game-window { position: relative; width: 900px; height: 500px; background: #000; border: 3px solid #1a1a1a; border-radius: 12px; overflow: hidden; }
+        #game-window:fullscreen { width: 100vw; height: 100vh; border: none; border-radius: 0; }
+        
+        #hud { position: absolute; top: 15px; left: 15px; z-index: 50; font-family: monospace; font-size: 18px; color: var(--accent); text-shadow: 2px 2px #000; pointer-events: none; }
+        #cross { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #fff; display: none; font-size: 24px; z-index: 50; pointer-events: none; }
+        
+        .hotbar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: none; gap: 8px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; z-index: 50; }
+        .slot { width: 40px; height: 40px; border: 2px solid #444; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
+        .slot.active { border-color: var(--accent); box-shadow: 0 0 10px var(--accent); background: rgba(0,210,255,0.2); }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
 <header>
-    <div style="font-size: 28px; font-weight: 900; letter-spacing: 2px;">AIGRY <span style="color:var(--accent)">v5.0</span></div>
-    <div>
-        <button class="btn" style="padding: 5px 10px;" onclick="setL('pl')">PL</button>
-        <button class="btn" style="padding: 5px 10px;" onclick="setL('en')">EN</button>
+    <div style="font-size: 22px; font-weight: bold;">AIGRY <span style="color:var(--accent)">v5.1</span></div>
+    <div class="menu">
+        <button class="btn" onclick="launch('mario')">MARIO</button>
+        <button class="btn" onclick="launch('mc')">MINECRAFT</button>
+        <button class="btn" onclick="launch('snake')">SNAKE</button>
     </div>
 </header>
 
-<div class="main-menu">
-    <button class="btn" onclick="launch('mario')">MARIO</button>
-    <button class="btn" onclick="launch('mc')">MINECRAFT</button>
-    <button class="btn" onclick="launch('snake')">SNAKE</button>
-    <button class="btn" onclick="launch('tetris')">TETRIS</button>
+<div id="game-window">
+    <div id="hud">Wybierz grę...</div>
+    <div id="cross">+</div>
+    <div id="game-canvas" style="width:100%; height:100%;"></div>
+    <div id="hotbar" class="hotbar"></div>
 </div>
 
-<div id="game-viewport">
-    <div id="hud"></div>
-    <div id="crosshair">+</div>
-    <div id="scene-container" style="width:100%; height:100%;"></div>
-    <div id="inv" class="inventory"></div>
-</div>
-
-<button class="btn" style="margin: 20px; background: var(--accent); color: #000;" onclick="toggleFS()">PEŁNY EKRAN (F)</button>
+<button class="btn" style="margin-top: 15px; background: var(--accent); color: #000;" onclick="goFS()">TRYB PEŁNOEKRANOWY (F)</button>
 
 <script>
-    let loop, keys = {}, level = 1, lang = 'pl', active = '', score = 0;
-    const view = document.getElementById('game-viewport');
+    let loop, keys = {}, activeGame = '', lvl = 1, bid = 0;
+    const win = document.getElementById('game-window');
     const hud = document.getElementById('hud');
+    const colors = [0x2ecc71, 0x7f8c8d, 0x8b4513, 0x228b22, 0xadefff, 0xd35400, 0xf1c40f, 0x3498db, 0x2c3e50, 0xe1e1e1];
+    const names = ["TRAWA", "KAMIEŃ", "PIEŃ", "LIŚCIE", "SZKŁO", "CEGŁY", "ZŁOTO", "DIAMENT", "WĘGIEL", "PIASEK"];
 
-    window.onkeydown = e => { keys[e.code] = true; if(e.code === 'KeyF') toggleFS(); };
+    window.onkeydown = e => { keys[e.code] = true; if(e.code === 'KeyF') goFS(); };
     window.onkeyup = e => keys[e.code] = false;
 
-    function toggleFS() {
-        if (!document.fullscreenElement) view.requestFullscreen();
+    function goFS() {
+        if (!document.fullscreenElement) win.requestFullscreen();
         else document.exitFullscreen();
     }
 
-    function setL(l) { lang = l; if(active) launch(active); }
-
     function launch(game) {
-        active = game;
+        activeGame = game;
         if(loop) cancelAnimationFrame(loop);
-        document.getElementById('scene-container').innerHTML = "";
-        document.getElementById('crosshair').style.display = (game === 'mc') ? "block" : "none";
-        document.getElementById('inv').style.display = (game === 'mc') ? "flex" : "none";
-        hud.innerText = "";
+        document.getElementById('game-canvas').innerHTML = "";
+        document.getElementById('cross').style.display = (game === 'mc') ? "block" : "none";
+        document.getElementById('hotbar').style.display = (game === 'mc') ? "flex" : "none";
         if(game === 'mario') runMario();
         if(game === 'mc') runMC();
         if(game === 'snake') runSnake();
-        if(game === 'tetris') runTetris();
     }
 
-    // --- SUPER MARIO 5.0 (50 LEVELS) ---
+    // --- MARIO 5.1 (FIXED) ---
     function runMario() {
-        const stage = document.getElementById('scene-container');
-        stage.innerHTML = '<canvas id="mc" width="900" height="500"></canvas>';
-        const cvs = document.getElementById('mc'), ctx = cvs.getContext('2d');
-        let p = {x:60, y:300, w:30, h:45, vx:0, vy:0, j:false};
-        let goal = 2500 + (level * 200), camX = 0, coins = 0;
-        let clouds = Array.from({length: 10}, () => ({x: Math.random()*goal, y: Math.random()*200, s: Math.random()*0.5+0.2}));
+        const stage = document.getElementById('game-canvas');
+        stage.innerHTML = '<canvas id="marioC" width="900" height="500"></canvas>';
+        const c = document.getElementById('marioC'), ctx = c.getContext('2d');
+        let p = {x: 50, y: 350, w: 30, h: 45, vx: 0, vy: 0, j: false, dir: 1};
+        let goal = 2500 + (lvl * 500), camX = 0;
 
-        function mLoop() {
-            if(keys['ArrowRight'] || keys['KeyD']) p.vx = 6; else if(keys['ArrowLeft'] || keys['KeyA']) p.vx = -6; else p.vx *= 0.8;
+        function update() {
+            if(keys['ArrowRight'] || keys['KeyD']) { p.vx = 6; p.dir = 1; }
+            else if(keys['ArrowLeft'] || keys['KeyA']) { p.vx = -6; p.dir = -1; }
+            else p.vx *= 0.8;
+            
             if((keys['Space'] || keys['ArrowUp'] || keys['KeyW']) && !p.j) { p.vy = -16; p.j = true; }
             p.vy += 0.8; p.x += p.vx; p.y += p.vy;
+
             if(p.y > 400) { p.y = 400; p.vy = 0; p.j = false; }
             if(p.x > 400) camX = p.x - 400;
 
-            // Grafika
-            ctx.fillStyle = "#3498db"; ctx.fillRect(0,0,900,500); // Sky
+            ctx.fillStyle = "#5c94fc"; ctx.fillRect(0,0,900,500);
             ctx.save(); ctx.translate(-camX, 0);
+            ctx.fillStyle = "#8b4513"; ctx.fillRect(0, 445, goal+1000, 60);
+            ctx.fillStyle = "#2ecc71"; ctx.fillRect(0, 445, goal+1000, 5);
             
-            // Paralaksa chmur
-            ctx.fillStyle = "rgba(255,255,255,0.5)";
-            clouds.forEach(c => { ctx.fillRect(c.x - camX * c.s, c.y, 60, 30); });
+            // MARIO DRAW
+            ctx.fillStyle = "red"; ctx.fillRect(p.x, p.y, p.w, p.h);
+            ctx.fillStyle = "white"; // OCZY
+            let eyeX = p.dir === 1 ? p.x + 18 : p.x + 5;
+            ctx.fillRect(eyeX, p.y + 10, 8, 8);
+            ctx.fillStyle = "black";
+            ctx.fillRect(p.dir === 1 ? eyeX+4 : eyeX, p.y + 12, 4, 4);
 
-            ctx.fillStyle = "#27ae60"; ctx.fillRect(0, 445, goal+1000, 60); // Ground
-            ctx.fillStyle = "#f1c40f"; ctx.fillRect(goal, 150, 15, 300); // Flagpole
-            
-            // Mario
-            ctx.fillStyle = "#e74c3c"; ctx.fillRect(p.x, p.y, p.w, p.h); 
-            ctx.fillStyle = "#000"; ctx.fillRect(p.x+20, p.y+10, 5, 5); // Eye
-
+            ctx.fillStyle = "gold"; ctx.fillRect(goal, 145, 10, 300);
             ctx.restore();
-            hud.innerText = `LEVEL: ${level}/50  COINS: ${coins}`;
-            if(p.x > goal) { level++; launch('mario'); }
-            loop = requestAnimationFrame(mLoop);
-        } mLoop();
+
+            hud.innerText = "MARIO LVL: " + lvl + " | CEL: " + Math.floor(goal - p.x) + "m";
+            if(p.x > goal) { lvl++; launch('mario'); }
+            loop = requestAnimationFrame(update);
+        } update();
     }
 
-    // --- MINECRAFT 5.0 ---
+    // --- MINECRAFT 5.1 (NEW BLOCKS & OUTLINE) ---
     function runMC() {
         const scene = new THREE.Scene(); scene.background = new THREE.Color(0x87CEEB);
-        scene.fog = new THREE.Fog(0x87CEEB, 5, 30);
         const cam = new THREE.PerspectiveCamera(75, 900/500, 0.1, 1000);
-        const rend = new THREE.WebGLRenderer({antialias: true});
-        rend.setSize(900, 500); document.getElementById('scene-container').appendChild(rend.domElement);
+        const renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setSize(900, 500); document.getElementById('game-canvas').appendChild(renderer.domElement);
         
-        const cols = [0x2ecc71, 0x7f8c8d, 0x8b4513, 0x2980b9, 0xd35400, 0xecf0f1, 0x1abc9c, 0xf1c40f, 0x2c3e50, 0x95a5a6];
-        let bid = 0, blocks = [];
-        
-        const inv = document.getElementById('inv'); inv.innerHTML = "";
-        cols.forEach((c, i) => { 
-            let s = document.createElement('div'); s.className = 'slot'; 
-            s.style.background = "#"+c.toString(16); if(i===0) s.classList.add('active');
-            inv.appendChild(s);
+        // HOTBAR INIT
+        const hb = document.getElementById('hotbar'); hb.innerHTML = "";
+        names.forEach((n, i) => {
+            let s = document.createElement('div'); s.className = 'slot' + (i === 0 ? ' active' : '');
+            s.style.backgroundColor = "#" + colors[i].toString(16).padStart(6, '0');
+            s.innerText = i+1; hb.appendChild(s);
         });
 
-        for(let x=-10; x<10; x++) for(let z=-10; z<10; z++) {
-            const b = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshLambertMaterial({color: cols[0]}));
+        let blocks = [];
+        for(let x=-8; x<8; x++) for(let z=-8; z<8; z++) {
+            const b = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshLambertMaterial({color: colors[0]}));
             b.position.set(x, 0, z); scene.add(b); blocks.push(b);
         }
 
         scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-        const l = new THREE.PointLight(0xffffff, 0.5); l.position.set(10,20,10); scene.add(l);
+        const sun = new THREE.PointLight(0xffffff, 0.6); sun.position.set(10,20,10); scene.add(sun);
         cam.position.set(0, 2, 5);
-        rend.domElement.onclick = () => rend.domElement.requestPointerLock();
+        renderer.domElement.onclick = () => renderer.domElement.requestPointerLock();
         
-        let y=0, p=0;
+        let yaw = 0, pitch = 0;
         document.addEventListener('mousemove', e => {
-            if(document.pointerLockElement === rend.domElement) {
-                y -= e.movementX*0.002; p -= e.movementY*0.002; p = Math.max(-1.5, Math.min(1.5, p));
+            if(document.pointerLockElement === renderer.domElement) {
+                yaw -= e.movementX*0.002; pitch -= e.movementY*0.002;
+                pitch = Math.max(-1.5, Math.min(1.5, pitch));
             }
         });
 
-        rend.domElement.onmousedown = e => {
-            if(document.pointerLockElement !== rend.domElement) return;
+        renderer.domElement.onmousedown = e => {
+            if(document.pointerLockElement !== renderer.domElement) return;
             const dir = new THREE.Vector3(0,0,-1).applyQuaternion(cam.quaternion);
             const pos = new THREE.Vector3().copy(cam.position).add(dir.multiplyScalar(4)).round();
             if(e.button === 0) {
-                const b = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshLambertMaterial({color: cols[bid]}));
-                b.position.copy(pos); scene.add(b); blocks.push(b);
+                const b = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshLambertMaterial({
+                    color: colors[bid], 
+                    transparent: bid === 4, 
+                    opacity: bid === 4 ? 0.6 : 1
+                }));
+                b.position.copy(pos); b.typeIdx = bid; scene.add(b); blocks.push(b);
             } else {
                 blocks.forEach((b, i) => { if(b.position.distanceTo(pos) < 0.8) { scene.remove(b); blocks.splice(i, 1); }});
             }
         };
 
-        function mcL() {
-            if(keys['KeyW']) cam.translateZ(-0.12); if(keys['KeyS']) cam.translateZ(0.12);
-            if(keys['KeyA']) cam.translateX(-0.12); if(keys['KeyD']) cam.translateX(0.12);
-            for(let i=0; i<10; i++) if(keys['Digit'+(i+1)%10]) { 
-                bid = i; Array.from(inv.children).forEach((s,idx)=>s.classList.toggle('active', idx===i)); 
+        function mcUpdate() {
+            if(keys['KeyW']) cam.translateZ(-0.15); if(keys['KeyS']) cam.translateZ(0.15);
+            if(keys['KeyA']) cam.translateX(-0.15); if(keys['KeyD']) cam.translateX(0.15);
+            if(keys['Space']) cam.position.y += 0.1; if(keys['ShiftLeft']) cam.position.y -= 0.1;
+            
+            // ZMIANA BLOKU 1-0
+            for(let i=1; i<=10; i++) {
+                let k = "Digit" + (i % 10);
+                if(keys[k]) {
+                    bid = i-1;
+                    Array.from(hb.children).forEach((s, idx) => s.classList.toggle('active', idx === bid));
+                }
             }
-            cam.rotation.set(p,y,0,'YXZ');
-            rend.render(scene, cam);
-            hud.innerText = "MINECRAFT v5.0";
-            loop = requestAnimationFrame(mcL);
-        } mcL();
+
+            cam.rotation.set(pitch, yaw, 0, 'YXZ');
+            renderer.render(scene, cam);
+            hud.innerText = "MINECRAFT | BLOK: " + names[bid];
+            loop = requestAnimationFrame(mcUpdate);
+        } mcUpdate();
     }
 
-    // --- SNAKE 5.0 (NAPRAWIONY) ---
+    // --- SNAKE 5.1 ---
     function runSnake() {
-        const st = document.getElementById('scene-container');
-        st.innerHTML = '<canvas id="sc" width="900" height="500"></canvas>';
-        const cvs = document.getElementById('sc'), ctx = cvs.getContext('2d');
-        let s = [{x:200, y:200}], f = {x:400, y:200}, d = 'R', nextD = 'R', lastT = 0; pts = 0;
+        const stage = document.getElementById('game-canvas');
+        stage.innerHTML = '<canvas id="snC" width="900" height="500"></canvas>';
+        const cvs = document.getElementById('snC'), ctx = cvs.getContext('2d');
+        let s = [{x:200, y:200}], f = {x:400, y:200}, d = 'R', lastT = 0, score = 0;
 
-        function sL(t) {
-            if(t - lastT > 80) {
-                lastT = t; d = nextD; let h = {...s[0]};
-                if(keys['ArrowUp'] && d !== 'D') nextD = 'U'; if(keys['ArrowDown'] && d !== 'U') nextD = 'D';
-                if(keys['ArrowLeft'] && d !== 'R') nextD = 'L'; if(keys['ArrowRight'] && d !== 'L') nextD = 'R';
+        function snLoop(t) {
+            if(t - lastT > 90) {
+                lastT = t; let h = {...s[0]};
+                if(keys['ArrowUp'] && d !== 'D') d = 'U'; if(keys['ArrowDown'] && d !== 'U') d = 'D';
+                if(keys['ArrowLeft'] && d !== 'R') d = 'L'; if(keys['ArrowRight'] && d !== 'L') d = 'R';
                 if(d === 'U') h.y -= 20; if(d === 'D') h.y += 20; if(d === 'L') h.x -= 20; if(d === 'R') h.x += 20;
-                if(h.x === f.x && h.y === f.y) { pts++; f = {x: Math.floor(Math.random()*44)*20, y: Math.floor(Math.random()*24)*20}; } else s.pop();
-                if(h.x < 0 || h.x >= 900 || h.y < 0 || h.y >= 500 || s.some(b=>b.x===h.x && b.y===h.y)) return launch('snake');
+                if(h.x === f.x && h.y === f.y) { score++; f = {x: Math.floor(Math.random()*44)*20, y: Math.floor(Math.random()*24)*20}; } else s.pop();
+                if(h.x < 0 || h.x >= 900 || h.y < 0 || h.y >= 500) return launch('snake');
                 s.unshift(h);
                 ctx.fillStyle = "#000"; ctx.fillRect(0,0,900,500);
-                ctx.fillStyle = "#00d2ff"; s.forEach(p => ctx.fillRect(p.x, p.y, 18, 18));
-                ctx.fillStyle = "#ff4757"; ctx.fillRect(f.x, f.y, 18, 18);
-                hud.innerText = "SCORE: " + pts;
+                ctx.fillStyle = var(--accent); s.forEach(p => ctx.fillRect(p.x, p.y, 18, 18));
+                ctx.fillStyle = "red"; ctx.fillRect(f.x, f.y, 18, 18);
+                hud.innerText = "SNAKE SCORE: " + score;
             }
-            loop = requestAnimationFrame(sL);
-        } loop = requestAnimationFrame(sL);
+            loop = requestAnimationFrame(snLoop);
+        } snLoop();
     }
-
-    // --- TETRIS (NOWA GRA) ---
-    function runTetris() {
-        const st = document.getElementById('scene-container');
-        st.innerHTML = '<canvas id="tc" width="900" height="500"></canvas>';
-        const cvs = document.getElementById('tc'), ctx = cvs.getContext('2d');
-        ctx.fillStyle = "#111"; ctx.fillRect(0,0,900,500);
-        hud.innerText = "TETRIS - WKRÓTCE PEŁNA AKTUALIZACJA";
-    }
-
 </script>
 </body>
 </html>
