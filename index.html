@@ -2,28 +2,29 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>AIGRY v6.4 - Engine Overhaul</title>
+    <title>AIGRY v6.5 - Multigame Fixed</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #050505; color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
-        header { background: #111; width: 100%; padding: 15px; border-bottom: 2px solid #333; display: flex; justify-content: center; gap: 10px; }
-        .btn { background: #222; color: #fff; border: 1px solid #444; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        .btn:hover { background: #333; border-color: #00d2ff; }
-        #game-box { width: 1000px; height: 600px; background: #000; border: 5px solid #1a1a1a; margin-top: 20px; position: relative; }
-        #hud { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); padding: 5px; font-family: monospace; z-index: 10; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        header { background: #111; width: 100%; padding: 15px; border-bottom: 2px solid #333; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .btn { background: #222; color: #fff; border: 1px solid #444; padding: 10px 18px; cursor: pointer; border-radius: 5px; font-weight: bold; transition: 0.2s; }
+        .btn:hover { background: #00d2ff; color: #000; }
+        #game-layout { width: 1000px; height: 600px; background: #000; border: 4px solid #222; margin-top: 20px; position: relative; overflow: hidden; border-radius: 8px; }
+        #hud { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.7); padding: 8px; font-family: monospace; z-index: 10; border-radius: 4px; border: 1px solid #333; }
         canvas { display: block; }
     </style>
 </head>
 <body>
 
 <header>
-    <button class="btn" onclick="runMario()">MARIO FIX</button>
-    <button class="btn" onclick="runMC()">MINECRAFT FIX (Pseudo-3D)</button>
-    <button class="btn" onclick="runFlappy()">FLAPPY BIRD</button>
-    <button class="btn" onclick="runSnake()">SNAKE</button>
+    <button class="btn" onclick="startMario()">MARIO FIX</button>
+    <button class="btn" onclick="startMC()">MINECRAFT AI</button>
+    <button class="btn" onclick="startFlappy()">FLAPPY BIRD</button>
+    <button class="btn" onclick="startInvaders()">INVADERS</button>
+    <button class="btn" onclick="startSnake()">SNAKE</button>
 </header>
 
-<div id="game-box">
-    <div id="hud">Wybierz grę powyżej. Jeśli nie działa - odśwież stronę.</div>
+<div id="game-layout">
+    <div id="hud">Wybierz grę powyżej!</div>
     <canvas id="screen" width="1000" height="600"></canvas>
 </div>
 
@@ -31,113 +32,114 @@
     const canvas = document.getElementById('screen');
     const ctx = canvas.getContext('2d');
     const hud = document.getElementById('hud');
-    let loop, keys = {};
+    let loop, keys = {}, score = 0;
 
     window.onkeydown = e => keys[e.code] = true;
     window.onkeyup = e => keys[e.code] = false;
 
-    function stopLoop() { if(loop) cancelAnimationFrame(loop); ctx.clearRect(0,0,1000,600); }
+    function reset() {
+        if(loop) cancelAnimationFrame(loop);
+        score = 0;
+        ctx.clearRect(0, 0, 1000, 600);
+    }
 
-    // ==================== MARIO FIX (SOLID CANVAS) ====================
-    function runMario() {
-        stopLoop();
-        let p = { x: 50, y: 500, vy: 0, jump: false };
+    // ==================== 1. MARIO (NEW DESIGN) ====================
+    function startMario() {
+        reset();
+        let p = { x: 100, y: 500, vy: 0, j: false };
         function update() {
-            ctx.fillStyle = "#5c94fc"; ctx.fillRect(0,0,1000,600); // Niebo
-            ctx.fillStyle = "#8b4513"; ctx.fillRect(0,550,1000,50); // Ziemia
-            
-            if(keys['ArrowRight']) p.x += 5;
-            if(keys['ArrowLeft']) p.x -= 5;
-            if(keys['Space'] && !p.jump) { p.vy = -15; p.jump = true; }
-            
+            ctx.fillStyle = "#5c94fc"; ctx.fillRect(0,0,1000,600);
+            ctx.fillStyle = "#8b4513"; ctx.fillRect(0,550,1000,50);
+            if(keys['ArrowRight']) p.x += 6; if(keys['ArrowLeft']) p.x -= 6;
+            if(keys['Space'] && !p.j) { p.vy = -16; p.j = true; }
             p.vy += 0.8; p.y += p.vy;
-            if(p.y > 500) { p.y = 500; p.vy = 0; p.jump = false; }
-
-            // Mario Character
-            ctx.fillStyle = "red"; ctx.fillRect(p.x, p.y, 40, 50);
-            ctx.fillStyle = "#ffdbac"; ctx.fillRect(p.x+10, p.y+5, 30, 20);
-            
-            hud.innerText = "MARIO WORLD: Strzałki = Ruch, Spacja = Skok";
+            if(p.y > 500) { p.y = 500; p.vy = 0; p.j = false; }
+            // Mario Model
+            ctx.fillStyle = "red"; ctx.fillRect(p.x, p.y-5, 30, 10); // Czapka
+            ctx.fillStyle = "#ffdbac"; ctx.fillRect(p.x, p.y+5, 30, 20); // Twarz
+            ctx.fillStyle = "black"; ctx.fillRect(p.x+20, p.y+10, 5, 5); // Wąsy
+            ctx.fillStyle = "blue"; ctx.fillRect(p.x, p.y+25, 30, 25); // Spodnie
+            hud.innerText = "MARIO WORLD | Strzałki + Spacja";
             loop = requestAnimationFrame(update);
         } update();
     }
 
-    // ==================== MINECRAFT pseudo-3D (Ultra Stable) ====================
-    function runMC() {
-        stopLoop();
-        let px = 5, py = 5, pa = 0;
-        const map = [
-            [1,1,1,1,1,1,1,1,1,1],
-            [1,0,0,0,0,0,0,0,0,1],
-            [1,0,2,2,0,0,0,0,0,1],
-            [1,0,2,2,0,0,3,3,0,1],
-            [1,0,0,0,0,0,3,3,0,1],
-            [1,1,1,1,1,1,1,1,1,1]
-        ];
-        
+    // ==================== 2. MINECRAFT (RAYCASTING) ====================
+    function startMC() {
+        reset();
+        let px = 2, py = 2, pa = 0;
+        const map = [[1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,1],[1,0,2,0,3,0,0,1],[1,1,1,1,1,1,1,1]];
         function update() {
-            ctx.fillStyle = "#333"; ctx.fillRect(0,0,1000,600); // Podłoga/Sufit
-            ctx.fillStyle = "#87CEEB"; ctx.fillRect(0,0,1000,300);
-            
-            if(keys['KeyW']) { px += Math.cos(pa)*0.05; py += Math.sin(pa)*0.05; }
-            if(keys['KeyS']) { px -= Math.cos(pa)*0.05; py -= Math.sin(pa)*0.05; }
-            if(keys['KeyA']) pa -= 0.05;
-            if(keys['KeyD']) pa += 0.05;
-
-            // Raycasting Engine
-            for(let i=0; i<100; i++) {
-                let ra = pa - 0.5 + i/100;
-                let rx = px, ry = py;
-                let d = 0;
-                while(d < 15) {
-                    d += 0.1;
-                    rx = px + Math.cos(ra) * d;
-                    ry = py + Math.sin(ra) * d;
-                    if(map[Math.floor(ry)] && map[Math.floor(ry)][Math.floor(rx)]) {
-                        let h = 600 / d;
-                        let color = map[Math.floor(ry)][Math.floor(rx)];
-                        ctx.fillStyle = color === 1 ? "#2ecc71" : (color === 2 ? "#ffd700" : "#3498db");
-                        ctx.fillRect(i*10, 300-h/2, 10, h);
-                        break;
+            ctx.fillStyle = "#222"; ctx.fillRect(0,300,1000,300);
+            ctx.fillStyle = "#87ceeb"; ctx.fillRect(0,0,1000,300);
+            if(keys['KeyW']) { px += Math.cos(pa)*0.06; py += Math.sin(pa)*0.06; }
+            if(keys['KeyA']) pa -= 0.05; if(keys['KeyD']) pa += 0.05;
+            for(let i=0; i<100; i++){
+                let ra = pa - 0.5 + i/100, rx = px, ry = py, d = 0;
+                while(d < 10) {
+                    d += 0.05; rx = px + Math.cos(ra)*d; ry = py + Math.sin(ra)*d;
+                    if(map[Math.floor(ry)][Math.floor(rx)]) {
+                        let h = 600/d;
+                        ctx.fillStyle = `hsl(${map[Math.floor(ry)][Math.floor(rx)]*100}, 50%, 40%)`;
+                        ctx.fillRect(i*10, 300-h/2, 10, h); break;
                     }
                 }
             }
-            hud.innerText = "MC AI PSEUDO-3D: WASD = Poruszanie, myszka nie jest potrzebna!";
+            hud.innerText = "MINECRAFT AI | W = Naprzód, A/D = Obrót";
             loop = requestAnimationFrame(update);
         } update();
     }
 
-    // ==================== SNAKE (Classic) ====================
-    function runSnake() {
-        stopLoop();
-        let s = [{x:10, y:10}], d = 'R', f = {x:15, y:15};
-        function update(t) {
-            ctx.fillStyle = "#000"; ctx.fillRect(0,0,1000,600);
-            if(keys['ArrowUp']) d='U'; if(keys['ArrowDown']) d='D';
-            if(keys['ArrowLeft']) d='L'; if(keys['ArrowRight']) d='R';
-            
-            let h = {...s[0]};
-            if(d==='U') h.y--; if(d==='D') h.y++; if(d==='L') h.x--; if(d==='R') h.x++;
-            s.unshift(h); s.pop();
-
-            ctx.fillStyle = "red"; ctx.fillRect(f.x*20, f.y*20, 18, 18);
-            ctx.fillStyle = "lime"; s.forEach(p => ctx.fillRect(p.x*20, p.y*20, 18, 18));
-            
-            hud.innerText = "SNAKE: Strzałki = Sterowanie";
-            setTimeout(() => { loop = requestAnimationFrame(update); }, 100);
+    // ==================== 3. FLAPPY BIRD ====================
+    function startFlappy() {
+        reset();
+        let by = 300, bv = 0, px = 1000, ph = 200;
+        function update() {
+            ctx.fillStyle = "#4ec0ca"; ctx.fillRect(0,0,1000,600);
+            bv += 0.5; by += bv; px -= 6;
+            if(keys['Space']) bv = -8;
+            if(px < -50) { px = 1000; ph = Math.random()*300+100; score++; }
+            ctx.fillStyle = "green"; ctx.fillRect(px, 0, 50, ph); ctx.fillRect(px, ph+200, 50, 600);
+            ctx.fillStyle = "yellow"; ctx.fillRect(150, by, 30, 30);
+            if(by > 600 || by < 0) startFlappy();
+            hud.innerText = "FLAPPY BIRD | Spacja: Skok | Score: " + score;
+            loop = requestAnimationFrame(update);
         } update();
     }
 
-    function runFlappy() {
-        stopLoop();
-        let by = 300, bv = 0;
+    // ==================== 4. SPACE INVADERS ====================
+    function startInvaders() {
+        reset();
+        let sx = 500, enemies = [];
+        for(let i=0; i<8; i++) enemies.push({x: i*100+100, y: 50});
         function update() {
-            ctx.fillStyle = "#70c5ce"; ctx.fillRect(0,0,1000,600);
-            bv += 0.5; by += bv;
-            if(keys['Space']) bv = -8;
-            ctx.fillStyle = "yellow"; ctx.fillRect(100, by, 30, 30);
-            if(by > 600 || by < 0) runFlappy();
-            hud.innerText = "FLAPPY BIRD: Spacja = Skok";
+            ctx.fillStyle = "#000"; ctx.fillRect(0,0,1000,600);
+            if(keys['ArrowLeft']) sx -= 8; if(keys['ArrowRight']) sx += 8;
+            ctx.fillStyle = "#0f0"; ctx.fillRect(sx, 550, 40, 20);
+            ctx.fillStyle = "#fff";
+            enemies.forEach(e => { ctx.fillRect(e.x, e.y, 40, 30); e.y += 0.2; });
+            hud.innerText = "INVADERS | Strzałki: Ruch";
+            loop = requestAnimationFrame(update);
+        } update();
+    }
+
+    // ==================== 5. SNAKE ====================
+    function startSnake() {
+        reset();
+        let s = [{x:10, y:10}], d = 'R', food = {x:15, y:15}, counter = 0;
+        function update() {
+            if(counter++ % 6 !== 0) { loop = requestAnimationFrame(update); return; }
+            ctx.fillStyle = "#000"; ctx.fillRect(0,0,1000,600);
+            if(keys['ArrowUp'] && d!=='D') d='U'; if(keys['ArrowDown'] && d!=='U') d='D';
+            if(keys['ArrowLeft'] && d!=='R') d='L'; if(keys['ArrowRight'] && d!=='L') d='R';
+            let head = {...s[0]};
+            if(d==='U') head.y--; if(d==='D') head.y++; if(d==='L') head.x--; if(d==='R') head.x++;
+            s.unshift(head);
+            if(head.x === food.x && head.y === food.y) { score++; food = {x:Math.floor(Math.random()*48), y:Math.floor(Math.random()*28)}; }
+            else s.pop();
+            ctx.fillStyle = "lime"; s.forEach(p => ctx.fillRect(p.x*20, p.y*20, 18, 18));
+            ctx.fillStyle = "red"; ctx.fillRect(food.x*20, food.y*20, 18, 18);
+            hud.innerText = "SNAKE | Strzałki | Wynik: " + score;
             loop = requestAnimationFrame(update);
         } update();
     }
